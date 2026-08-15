@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { isSupabaseConfigured, supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
+import './AuthPanel.css'
 
 export function AuthPanel() {
   const { session, loading } = useAuth()
