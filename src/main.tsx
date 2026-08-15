@@ -4,6 +4,7 @@ import App from './App'
 import './styles.css'
 import './data-state.css'
 import './discover.css'
+import './power-ui.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
