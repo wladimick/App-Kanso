@@ -136,21 +136,33 @@ Ajusta padding, poster/editor y navegación para teléfonos más angostos.
 
 No cambia base de datos, servicios, autenticación ni lógica de persistencia. El principal riesgo es visual/responsive y debe validarse en Preview Vercel desde un teléfono real.
 
-## 14. QA requerido antes de merge
+## 14. Validaciones automáticas realizadas
 
-1. `npm ci`;
-2. TypeScript;
-3. build Vite;
-4. Preview Vercel Ready;
-5. abrir Preview desde iPhone;
-6. navegar Inicio → Biblioteca → Deseos → Viendo → Completados → Favoritos → Descubrir;
-7. abrir una ficha de biblioteca;
-8. comprobar teclado/formulario y cierre del editor;
-9. guardar un cambio;
-10. comprobar que barra inferior no tape botones ni contenido;
-11. probar búsqueda TMDB;
-12. probar orientación vertical como escenario principal.
+PR de trabajo: `#4 Optimize Kanso mobile experience`.
 
-## 15. Estado
+Resultado:
 
-**Optimización móvil implementada en rama de trabajo. Pendiente validación automática y Preview Vercel antes de merge a `main`.**
+- `npm ci`: OK;
+- TypeScript: OK;
+- build Vite: OK;
+- GitHub Actions `Kanso CI` run #102: success;
+- Vercel Preview: Ready.
+
+Preview generado:
+
+`https://app-kanso-git-feat-mobile-optimization-wladimick1.vercel.app`
+
+## 15. QA funcional pendiente antes de merge
+
+1. abrir Preview desde iPhone;
+2. navegar Inicio → Biblioteca → Deseos → Viendo → Completados → Favoritos → Descubrir;
+3. abrir una ficha de biblioteca;
+4. comprobar teclado/formulario y cierre del editor;
+5. guardar un cambio;
+6. comprobar que barra inferior no tape botones ni contenido;
+7. probar búsqueda TMDB;
+8. probar orientación vertical como escenario principal.
+
+## 16. Estado
+
+**Optimización móvil implementada. CI y Vercel Preview exitosos. Pendiente únicamente QA visual/funcional desde teléfono real antes de merge a `main`.**
