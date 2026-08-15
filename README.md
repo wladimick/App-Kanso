@@ -86,7 +86,7 @@ Archivos:
 - `src/hooks/useTmdbSearch.ts`
 - `src/components/DiscoverPanel.tsx`
 
-### Secreto necesario
+### Secreto
 
 En el proyecto Supabase de Kanso se utiliza:
 
@@ -96,19 +96,18 @@ TMDB_READ_ACCESS_TOKEN
 
 El usuario confirmó el 15 de agosto de 2026 que este secreto fue creado manualmente en el proyecto correcto de Kanso. El valor real nunca se guarda en GitHub ni en la documentación.
 
-### Despliegue de la función
+### Edge Function
 
-La función aún debe desplegarse en el proyecto Kanso. Desde CLI:
+El usuario confirmó el 15 de agosto de 2026 que `tmdb-search` fue desplegada manualmente desde Supabase Dashboard utilizando el código versionado en el repositorio.
 
-```bash
-supabase login
-supabase link --project-ref gfqudpbtxhquwsrtahnm
-supabase functions deploy tmdb-search --use-api
-```
+La versión actual usa `@supabase/server` con `auth: 'user'` y mantiene `verify_jwt = true`, por lo que el buscador está diseñado para utilizarse únicamente con una sesión Supabase autenticada.
 
-También puede desplegarse desde **Supabase Dashboard → Edge Functions**, creando una función llamada exactamente `tmdb-search` y usando el código versionado en `supabase/functions/tmdb-search/index.ts`.
+Estado de validación:
 
-`tmdb-search` mantiene `verify_jwt = true`, por lo que el buscador se utiliza solamente con una sesión Supabase autenticada.
+- deploy manual: confirmado por el usuario;
+- código fuente: versionado;
+- CI del código adaptado al runtime actual: exitoso;
+- invocación end-to-end contra el proyecto real: pendiente por falta de acceso de esta sesión a la cuenta Supabase Kanso.
 
 El API Key v3 de TMDB no es necesario en el flujo actual: se utiliza el API Read Access Token como Bearer token.
 
@@ -127,9 +126,9 @@ GitHub Actions ejecuta:
 3. `npm run typecheck`;
 4. `npm run build`.
 
-Última validación de código del bloque TMDB:
+Validación del código actual de Edge Function/frontend:
 
-- run `31899408056` / Kanso CI #70;
+- run `31900240625` / Kanso CI #83;
 - `npm ci`: OK;
 - typecheck: OK;
 - build: OK.
@@ -156,6 +155,7 @@ Registros actuales:
 - `docs/auditoria/2026-08-15-1342-integracion-tmdb-segura.md`
 - `docs/auditoria/2026-08-15-1350-cierre-tmdb-ci.md`
 - `docs/auditoria/2026-08-15-1354-secreto-tmdb-configurado.md`
+- `docs/auditoria/2026-08-15-1408-deploy-tmdb-search.md`
 
 ## Estado actual
 
@@ -170,9 +170,9 @@ Registros actuales:
 - ✅ buscador TMDB y acción `Agregar a Kanso` implementados en frontend
 - ✅ credenciales TMDB fuera de variables `VITE_*`
 - ✅ secreto `TMDB_READ_ACCESS_TOKEN` informado como creado en Supabase Kanso
+- ✅ `tmdb-search` informada como desplegada manualmente
 - ✅ `package-lock.json` versionado
 - ✅ CI con typecheck y build
-- ⏳ desplegar `tmdb-search` en el Supabase real de Kanso
 - ⏳ prueba funcional de Magic Link contra el proyecto real
 - ⏳ prueba end-to-end de búsqueda TMDB y alta en `library_items`
 - ⏳ logo TMDB aprobado en créditos antes de publicación pública
