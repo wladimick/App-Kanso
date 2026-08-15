@@ -4,6 +4,7 @@
 **Zona horaria:** America/Santiago  
 **Repositorio:** `wladimick/App-Kanso`  
 **Rama:** `feat/power-library-navigation`  
+**PR:** `#3`  
 **Responsable de registro:** ChatGPT · GPT-5.6 Sol
 
 ## 1. Objetivo
@@ -141,25 +142,38 @@ Motivo: un título puede ser reclasificado manualmente de `Serie` a `Anime`. Des
 - ficha lateral responsive;
 - confirmación antes de eliminar.
 
-## 11. Validaciones pendientes
+## 11. Validación automática
 
-Antes de mergear a `main`:
+GitHub Actions run `31911472429` / Kanso CI #99:
 
-1. GitHub Actions: `npm ci`;
-2. TypeScript;
-3. build Vite;
-4. Preview Vercel;
-5. QA autenticado:
-   - abrir Naruto desde `Mi biblioteca`;
-   - cambiar `Serie` → `Anime`;
-   - cambiar `Pendiente` → `Viendo`;
-   - asignar episodio y temporada;
-   - guardar;
-   - comprobar movimiento automático a `Viendo`;
-   - marcar favorito y comprobar vista `Favoritos`;
-   - comprobar eliminación.
+- checkout: OK;
+- Node.js 22: OK;
+- `npm ci`: OK;
+- TypeScript / `npm run typecheck`: OK;
+- Vite / `npm run build`: OK.
 
-## 12. Siguientes módulos recomendados
+Vercel generó correctamente el Preview del PR #3:
+
+`https://app-kanso-git-feat-power-library-navigation-wladimick1.vercel.app`
+
+Estado informado por Vercel: `Ready`.
+
+## 12. QA funcional pendiente antes de merge
+
+Probar con sesión Supabase real:
+
+1. abrir `Mi biblioteca` y confirmar que solo aparezcan títulos guardados;
+2. abrir `Naruto` o `Naruto Shippuden` pulsando su card;
+3. cambiar `Serie` → `Anime`;
+4. cambiar `Pendiente` → `Viendo`;
+5. asignar temporada y episodio;
+6. guardar y confirmar persistencia tras recarga;
+7. comprobar que el título salga de `Lista de deseos` y aparezca en `Viendo`;
+8. marcar favorito y comprobar la vista `Favoritos`;
+9. probar puntuación y notas;
+10. probar eliminación con un registro que sea seguro borrar.
+
+## 13. Siguientes módulos recomendados
 
 - detalle automático TMDB para temporadas/episodios;
 - selector real de temporada + episodios;
@@ -171,6 +185,6 @@ Antes de mergear a `main`:
 - importadores externos;
 - estadísticas personales.
 
-## 13. Estado
+## 14. Estado
 
-**Implementación completada en rama de trabajo. Pendiente CI y Preview QA antes de merge.**
+**Implementación y validación automática completadas. Preview Vercel Ready. PR #3 se mantiene Draft hasta QA funcional autenticado del usuario.**
