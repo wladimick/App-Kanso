@@ -93,6 +93,7 @@
   .topbar-actions {
     width: 100%;
     justify-items: stretch;
+    gap: 8px;
   }
 
   .topbar-actions .search-box,
@@ -100,4 +101,56 @@
     width: 100%;
     max-width: none;
   }
+
+  .auth-state,
+  .auth-session,
+  .auth-form { border-radius: 13px; }
+
+  .auth-state {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+  }
+
+  .auth-session {
+    min-height: 50px;
+    justify-content: space-between;
+    padding: 8px 8px 8px 12px;
+  }
+  .auth-session > div { min-width: 0; }
+  .auth-session strong {
+    max-width: min(62vw, 280px);
+    white-space: nowrap;
+  }
+  .auth-session button {
+    flex: 0 0 auto;
+    min-width: 58px;
+    min-height: 38px;
+  }
+
+  .auth-form {
+    grid-template-columns: 1fr auto;
+    min-height: 50px;
+    padding: 5px;
+  }
+  .auth-form input {
+    min-height: 40px;
+    padding: 8px 10px;
+    font-size: 16px;
+  }
+  .auth-form button {
+    min-height: 40px;
+    padding: 8px 14px;
+  }
+  .auth-form small {
+    line-height: 1.4;
+    padding-bottom: 7px;
+  }
+}
+
+@media (max-width: 390px) {
+  .auth-session strong { max-width: 58vw; }
+  .auth-form { grid-template-columns: 1fr; }
+  .auth-form button { width: 100%; }
 }
