@@ -5,6 +5,7 @@
 **Repositorio:** `wladimick/App-Kanso`  
 **Rama base:** `main`  
 **Rama de trabajo:** `feat/posters-biblioteca`  
+**PR de posters:** `#2`  
 **Responsable de registro:** ChatGPT · GPT-5.6 Sol
 
 ## 1. Objetivo
@@ -83,20 +84,44 @@ Importante: el progreso no debe considerarse solamente una “sesión del navega
 - `src/styles.css`
 - `docs/auditoria/2026-08-15-1731-merge-pr1-posters-biblioteca.md`
 
-## 7. Validaciones pendientes
+## 7. Validaciones ejecutadas
 
-Antes de integrar esta rama a `main`:
+### GitHub Actions
 
-1. ejecutar GitHub Actions (`npm ci`, typecheck, build);
-2. revisar Preview Deployment de Vercel;
-3. iniciar sesión con Supabase;
-4. agregar un título con poster desde TMDB;
-5. confirmar que `poster_url` persiste tras recargar;
-6. confirmar poster en `Mi biblioteca`;
-7. confirmar poster en `Viendo ahora` cuando el título cambie a estado `watching`;
-8. comprobar fallback para un título sin poster.
+Run: `31909793437` / Kanso CI #95.
 
-## 8. Siguiente etapa recomendada
+Resultado:
+
+- Setup Node.js 22: OK;
+- `npm ci`: OK;
+- `npm run typecheck`: OK;
+- `npm run build`: OK;
+- job completo: **success**.
+
+### Vercel Preview
+
+Vercel creó correctamente un Preview para el PR #2 y reportó estado **Ready**.
+
+Preview:
+
+`https://app-kanso-git-feat-posters-biblioteca-wladimick1.vercel.app`
+
+La generación exitosa del Preview confirma que la rama fue aceptada por el pipeline de Vercel. La validación visual con una sesión autenticada y datos reales permanece como QA funcional del usuario.
+
+## 8. QA funcional pendiente
+
+No verificable directamente desde la conexión disponible de ChatGPT porque el proyecto Supabase de Kanso pertenece a otra cuenta.
+
+Pendiente comprobar con la sesión real:
+
+1. iniciar sesión con Supabase;
+2. agregar un título con poster desde TMDB;
+3. confirmar que `poster_url` persiste tras recargar;
+4. confirmar poster en `Mi biblioteca`;
+5. confirmar poster en `Viendo ahora` cuando el título esté en estado `watching`;
+6. comprobar fallback para un título sin poster.
+
+## 9. Siguiente etapa recomendada
 
 Una vez validada la imagen real:
 
@@ -105,6 +130,6 @@ Una vez validada la imagen real:
 - obtener temporadas/episodios reales desde TMDB;
 - posteriormente integrar AniList para anime/manga.
 
-## 9. Estado
+## 10. Estado
 
-**PR #1 integrado a `main`. Rama `feat/posters-biblioteca` creada y corrección de posters implementada. Pendiente CI, Preview QA y merge de esta segunda etapa.**
+**PR #1 integrado a `main`. PR #2 con posters implementado, CI exitoso y Vercel Preview Ready. Pendiente únicamente QA funcional con sesión real antes o después del merge, sin cambios de base de datos requeridos.**
