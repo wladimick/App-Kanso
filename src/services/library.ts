@@ -1,0 +1,101 @@
+import { requireSupabase } from '../lib/supabase'
+import type { DatabaseWatchStatus, MediaSource, DatabaseMediaType } from '../lib/database.types'
+
+export type LibraryItemInput = {
+  source: MediaSource
+  externalId: string
+  mediaType: DatabaseMediaType
+  title: string
+  originalTitle?: string | null
+  posterUrl?: string | null
+  releaseYear?: number | null
+  totalSeasons?: number | null
+  totalEpisodes?: number | null
+  status?: DatabaseWatchStatus
+}
+
+export async function listLibrary(userId: string) {
+  const client = requireSupabase()
+  const { data, error } = await client
+    .from('library_items')
+    .select('*')
+    .eq('user_id', userId)
+    .order('updated_at', { ascending: false })
+
+  if (error) throw error
+  return data
+}
+
+export async function upsertLibraryItem(userId: string, item: LibraryItemInput) {
+  const client = requireSupabase()
+  const now = new Date().toISOString()
+  const { data, error } = await client
+    .from('library_items')
+    .upsert(
+      {
+        user_id: userId,
+        source: item.source,
+        external_id: item.externalId,
+        media_type: item.mediaType,
+        title: item.title,
+        original_title: item.originalTitle ?? null,
+        poster_url: item.posterUrl ?? null,
+        release_year: item.releaseYear ?? null,
+        status: item.status ?? 'planned',
+        current_season: null,
+        current_episode: null,
+        total_seasons: item.totalSeasons ?? null,
+        total_episodes: item.totalEpisodes ?? null,
+        score: null,
+        notes: null,
+        started_at: null,
+        completed_at: null,
+        updated_at: now,
+      },
+      { onConflict: 'user_id,source,external_id,media_type' },
+    )
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function updateProgress(
+  userId: string,
+  libraryItemId: string,
+  progress: { season?: number | null; episode?: number | null; status?: DatabaseWatchStatus },
+) {
+  const client = requireSupabase()
+  const now = new Date().toISOString()
+  const updates = {
+    current_season: progress.season ?? null,
+    current_episode: progress.episode ?? null,
+    status: progress.status ?? 'watching',
+    started_at: progress.status === 'watching' ? now.slice(0, 10) : undefined,
+    completed_at: progress.status === 'completed' ? now.slice(0, 10) : null,
+    updated_at: now,
+  }
+
+  const { data, error } = await client
+    .from('library_items')
+    .update(updates)
+    .eq('id', libraryItemId)
+    .eq('user_id', userId)
+    .select()
+    .single()
+
+  if (error) throw error
+
+  const { error: eventError } = await client.from('watch_events').insert({
+    user_id: userId,
+    library_item_id: libraryItemId,
+    event_type: progress.status === 'completed' ? 'completed' : 'progress',
+    season: progress.season ?? null,
+    episode: progress.episode ?? null,
+    score: null,
+  })
+
+  if (eventError) throw eventError
+  return data
+}
