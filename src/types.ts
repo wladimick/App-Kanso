@@ -7,6 +7,7 @@ export interface LibraryItem {
   type: MediaType
   status: WatchStatus
   year: number
+  posterUrl?: string
   currentEpisode?: number
   totalEpisodes?: number
   score?: number
