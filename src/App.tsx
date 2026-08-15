@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react'
 import { AuthPanel } from './components/AuthPanel'
+import { DiscoverPanel } from './components/DiscoverPanel'
 import { useAuth } from './hooks/useAuth'
 import { useLibrary } from './hooks/useLibrary'
+import type { TmdbSearchResult } from './services/tmdb'
 import type { LibraryItem, MediaType, WatchStatus } from './types'
 
 const demoItems: LibraryItem[] = [
@@ -43,7 +45,13 @@ function initials(title: string) {
 
 export default function App() {
   const { session, loading: authLoading } = useAuth()
-  const { rows, loading: libraryLoading, error: libraryError, advanceEpisode: advanceRemoteEpisode } = useLibrary(session?.user.id)
+  const {
+    rows,
+    loading: libraryLoading,
+    error: libraryError,
+    addItem,
+    advanceEpisode: advanceRemoteEpisode,
+  } = useLibrary(session?.user.id)
   const [localItems, setLocalItems] = useState(demoItems)
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<'all' | MediaType>('all')
@@ -75,6 +83,10 @@ export default function App() {
     })
   }, [items, query, filter])
 
+  const existingCatalogKeys = useMemo(() => new Set(
+    rows.map((row) => `${row.source}:${row.media_type}:${row.external_id}`),
+  ), [rows])
+
   const watching = items.filter((item) => item.status === 'watching')
   const completed = items.filter((item) => item.status === 'completed').length
   const planned = items.filter((item) => item.status === 'planned').length
@@ -95,6 +107,19 @@ export default function App() {
         status: next === item.totalEpisodes ? 'completed' : 'watching',
       }
     }))
+  }
+
+  const addTmdbItem = async (item: TmdbSearchResult) => {
+    await addItem({
+      source: 'tmdb',
+      externalId: item.externalId,
+      mediaType: item.mediaType,
+      title: item.title,
+      originalTitle: item.originalTitle,
+      posterUrl: item.posterUrl,
+      releaseYear: item.releaseYear,
+      status: 'planned',
+    })
   }
 
   const dataMode = authLoading
@@ -120,13 +145,13 @@ export default function App() {
           <button className="nav-item active">Inicio</button>
           <button className="nav-item">Mi biblioteca</button>
           <button className="nav-item">Colecciones</button>
-          <button className="nav-item">Descubrir</button>
+          <a className="nav-item nav-link" href="#discover">Descubrir</a>
         </nav>
 
         <div className="sidebar-note">
-          <span>Backend preparado</span>
+          <span>Arquitectura</span>
           <strong>Supabase + TMDB + AniList</strong>
-          <p>Tu progreso vive en Kanso; los proveedores externos solo entregan el catálogo.</p>
+          <p>Tu progreso vive en Kanso; las credenciales externas permanecen en funciones de servidor.</p>
         </div>
       </aside>
 
@@ -141,7 +166,7 @@ export default function App() {
             <AuthPanel />
             <label className="search-box">
               <span>⌕</span>
-              <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar en Kanso..." />
+              <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar en mi biblioteca..." />
             </label>
           </div>
         </header>
@@ -167,7 +192,7 @@ export default function App() {
           {session && !libraryLoading && watching.length === 0 ? (
             <div className="empty-state">
               <strong>Aún no tienes títulos en progreso.</strong>
-              <p>Tu sesión ya usa la biblioteca real de Supabase. Cuando agreguemos TMDB podrás buscar títulos y comenzar a seguirlos desde aquí.</p>
+              <p>Busca un título en TMDB, agrégalo a Kanso y luego podremos comenzar a registrar su progreso.</p>
             </div>
           ) : (
             <div className="continue-grid">
@@ -195,6 +220,12 @@ export default function App() {
           )}
         </section>
 
+        <DiscoverPanel
+          enabled={Boolean(session)}
+          existingKeys={existingCatalogKeys}
+          onAdd={addTmdbItem}
+        />
+
         <section className="section-block">
           <div className="section-heading library-heading">
             <div><p className="eyebrow">Todo en un lugar</p><h2>Mi biblioteca</h2></div>
@@ -210,7 +241,7 @@ export default function App() {
           {session && !libraryLoading && visibleItems.length === 0 ? (
             <div className="empty-state compact">
               <strong>Tu biblioteca está vacía.</strong>
-              <p>La conexión está lista para leer tus datos reales. El siguiente bloque será agregar títulos desde TMDB y AniList.</p>
+              <p>Usa el buscador de TMDB para agregar tu primera película o serie.</p>
             </div>
           ) : (
             <div className="library-grid">
