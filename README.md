@@ -13,7 +13,7 @@ Kanso es una aplicación personal para organizar y seguir películas, series y a
 ## Stack
 
 - React + Vite + TypeScript
-- Supabase para autenticación, progreso, listas y colecciones
+- Supabase para autenticación, progreso, listas, colecciones y funciones de servidor
 - TMDB para películas y series
 - AniList para anime y manga en una etapa posterior
 
@@ -36,17 +36,16 @@ npm run typecheck
 npm run build
 ```
 
-## Variables de entorno
+## Variables de entorno del frontend
 
-Kanso utiliza variables Vite:
+Kanso expone al navegador únicamente variables públicas de Supabase:
 
 ```env
 VITE_SUPABASE_URL=
 VITE_SUPABASE_PUBLISHABLE_KEY=
-VITE_TMDB_ACCESS_TOKEN=
 ```
 
-No guardar claves `service_role`, `sb_secret_...` ni otros secretos de backend en variables `VITE_`, porque estas se exponen al navegador.
+No guardar claves `service_role`, `sb_secret_...`, tokens TMDB ni otros secretos de backend en variables `VITE_`, porque Vite las incorpora al JavaScript del navegador.
 
 ## Supabase
 
@@ -65,6 +64,56 @@ Estado de verificación:
 - frontend autenticado: preparado para leer `library_items`;
 - modo sin sesión: utiliza datos demo separados;
 - RLS: definido en la migración y debe permanecer habilitado.
+
+## TMDB
+
+La credencial de TMDB **no vive en React**. Kanso utiliza esta ruta:
+
+```text
+React/Vite
+   ↓ usuario autenticado
+Supabase Edge Function · tmdb-search
+   ↓ Bearer token privado
+TMDB API
+```
+
+Archivos:
+
+- `supabase/functions/tmdb-search/index.ts`
+- `supabase/config.toml`
+- `supabase/functions/.env.example`
+- `src/services/tmdb.ts`
+- `src/hooks/useTmdbSearch.ts`
+- `src/components/DiscoverPanel.tsx`
+
+### Secreto necesario
+
+En el proyecto Supabase de Kanso se debe crear:
+
+```text
+TMDB_READ_ACCESS_TOKEN
+```
+
+El valor real nunca debe subirse a GitHub.
+
+Puede configurarse desde **Supabase Dashboard → Edge Functions → Secrets** o mediante Supabase CLI:
+
+```bash
+supabase secrets set TMDB_READ_ACCESS_TOKEN="<TOKEN>"
+```
+
+### Despliegue de la función
+
+Desde un checkout local vinculado al proyecto Kanso:
+
+```bash
+supabase link --project-ref gfqudpbtxhquwsrtahnm
+supabase functions deploy tmdb-search
+```
+
+`tmdb-search` mantiene `verify_jwt = true`, por lo que el buscador se utiliza solamente con una sesión Supabase autenticada.
+
+El API Key v3 de TMDB no es necesario en el flujo actual: se utiliza el API Read Access Token como Bearer token.
 
 ## Autenticación
 
@@ -102,6 +151,7 @@ Registros actuales:
 
 - `docs/auditoria/2026-08-15-1253-integracion-supabase.md`
 - `docs/auditoria/2026-08-15-1315-activacion-biblioteca-supabase.md`
+- `docs/auditoria/2026-08-15-1342-integracion-tmdb-segura.md`
 
 ## Estado actual
 
@@ -112,9 +162,13 @@ Registros actuales:
 - ✅ migración informada como aplicada manualmente
 - ✅ dashboard preparado para biblioteca real autenticada
 - ✅ modo demo separado de datos reales
+- ✅ proxy TMDB versionado como Supabase Edge Function
+- ✅ buscador TMDB y acción `Agregar a Kanso` implementados en frontend
+- ✅ credenciales TMDB fuera de variables `VITE_*`
 - ✅ `package-lock.json` versionado
 - ✅ CI con typecheck y build
+- ⏳ configurar `TMDB_READ_ACCESS_TOKEN` en el Supabase real de Kanso
+- ⏳ desplegar `tmdb-search` en el Supabase real de Kanso
 - ⏳ prueba funcional de Magic Link contra el proyecto real
-- ⏳ prueba real de lectura/escritura en `library_items` y `watch_events`
-- ⏳ TMDB
+- ⏳ prueba end-to-end de búsqueda TMDB y alta en `library_items`
 - ⏳ AniList
