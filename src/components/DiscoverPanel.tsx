@@ -8,8 +8,8 @@ export type DiscoverPanelProps = {
   onAdd: (item: TmdbSearchResult) => Promise<unknown>
 }
 
-function catalogKey(item: Pick<TmdbSearchResult, 'externalId' | 'mediaType'>) {
-  return `tmdb:${item.mediaType}:${item.externalId}`
+function catalogKey(item: Pick<TmdbSearchResult, 'externalId'>) {
+  return `tmdb:${item.externalId}`
 }
 
 export function DiscoverPanel({ enabled, existingKeys, onAdd }: DiscoverPanelProps) {
@@ -92,7 +92,7 @@ export function DiscoverPanel({ enabled, existingKeys, onAdd }: DiscoverPanelPro
               const isAdding = addingKey === key
 
               return (
-                <article className="discover-card" key={key}>
+                <article className="discover-card" key={`${key}:${item.mediaType}`}>
                   <div className="discover-poster">
                     {item.posterUrl ? (
                       <img src={item.posterUrl} alt={`Poster de ${item.title}`} loading="lazy" />
