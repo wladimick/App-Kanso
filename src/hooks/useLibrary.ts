@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Database } from '../lib/database.types'
-import { listLibrary, updateProgress } from '../services/library'
+import { addLibraryItem, listLibrary, updateProgress, type LibraryItemInput } from '../services/library'
 
 type LibraryRow = Database['public']['Tables']['library_items']['Row']
 
@@ -35,6 +35,24 @@ export function useLibrary(userId?: string) {
     void refresh()
   }, [refresh])
 
+  const addItem = useCallback(async (item: LibraryItemInput) => {
+    if (!userId) return null
+
+    try {
+      const added = await addLibraryItem(userId, item)
+      setRows((current) => {
+        const withoutExisting = current.filter((row) => row.id !== added.id)
+        return [added, ...withoutExisting]
+      })
+      setError(null)
+      return added
+    } catch (cause) {
+      console.error('No fue posible agregar el título a Supabase.', cause)
+      setError(cause instanceof Error ? cause.message : 'No fue posible agregar el título.')
+      throw cause
+    }
+  }, [userId])
+
   const advanceEpisode = useCallback(async (row: LibraryRow) => {
     if (!userId || !row.total_episodes) return
 
@@ -61,6 +79,7 @@ export function useLibrary(userId?: string) {
     loading,
     error,
     refresh,
+    addItem,
     advanceEpisode,
   }
 }
