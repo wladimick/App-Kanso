@@ -59,6 +59,7 @@ Se verificó documentación primaria actual antes de implementar.
 - El API Read Access Token se envía como Bearer token en `Authorization`.
 - El mismo mecanismo puede utilizarse con endpoints v3 y v4.
 - Se utilizaron los endpoints v3 de búsqueda de películas y TV.
+- TMDB exige atribución para uso de datos/imágenes; antes de producción pública se debe incorporar además uno de sus logos aprobados en una sección de créditos/acerca de.
 
 ### Supabase
 
@@ -77,6 +78,8 @@ Se modificó `.env.example`:
 - se eliminó `VITE_TMDB_ACCESS_TOKEN`;
 - se mantuvieron únicamente las variables públicas de Supabase;
 - se documentó que TMDB debe configurarse como secreto de Edge Functions.
+
+Se modificó también `src/vite-env.d.ts` para eliminar `VITE_TMDB_ACCESS_TOKEN` del contrato TypeScript del frontend.
 
 ### 5.2 Secreto de servidor documentado
 
@@ -194,7 +197,7 @@ Funcionalidad:
 - errores visibles;
 - estado sin resultados;
 - búsqueda habilitada únicamente con sesión;
-- aviso de atribución de TMDB.
+- aviso textual obligatorio de atribución TMDB.
 
 Se creó:
 
@@ -225,6 +228,7 @@ Se modificó `src/main.tsx` para cargar los estilos de descubrimiento.
 ## 7. Archivos modificados
 
 - `.env.example`
+- `src/vite-env.d.ts`
 - `src/services/library.ts`
 - `src/hooks/useLibrary.ts`
 - `src/App.tsx`
@@ -270,16 +274,37 @@ supabase functions deploy tmdb-search
 
 La función debe conservar `verify_jwt = true`.
 
-## 10. Validación pendiente al momento de crear este registro
+## 10. Validación de CI
 
-Después de los cambios de código debe ejecutarse GitHub Actions:
+Se ejecutó GitHub Actions sobre el último cambio de código del bloque.
 
-- `npm ci`;
-- `npm run typecheck`;
-- `npm run build`.
+Run de push:
 
-El resultado final se agregará a esta auditoría una vez completado el workflow correspondiente.
+`31899335495` — Kanso CI run #64.
 
-## 11. Estado del bloque
+Resultado:
 
-**Integración TMDB implementada en código con credencial aislada en servidor. El frontend, la Edge Function y el alta a biblioteca están versionados. Para activarla contra datos reales falta únicamente configurar el secreto y desplegar la función en el Supabase correcto de Kanso, seguido de la prueba end-to-end.**
+- Setup Node.js 22: ✅
+- `npm ci`: ✅
+- `npm run typecheck`: ✅
+- `npm run build`: ✅
+- Job final: **SUCCESS**.
+
+El workflow valida el frontend TypeScript/Vite. La Edge Function queda versionada pero su ejecución real solo puede verificarse después del deploy en el Supabase Kanso correcto.
+
+## 11. Pendientes
+
+1. Crear el secreto `TMDB_READ_ACCESS_TOKEN` en el Supabase de Kanso.
+2. Desplegar `tmdb-search`.
+3. Probar Magic Link / sesión real.
+4. Buscar un título desde Kanso.
+5. Confirmar respuesta de `tmdb-search` y posters.
+6. Agregar un título y confirmar fila en `library_items`.
+7. Intentar agregarlo nuevamente y confirmar que no se resetea progreso.
+8. Incorporar un logo TMDB aprobado en `Acerca de/Créditos` antes de publicación pública.
+9. Ejecutar Security y Performance Advisors en el proyecto correcto.
+10. Integrar AniList en un bloque posterior.
+
+## 12. Estado del bloque
+
+**Integración TMDB implementada y validada a nivel de frontend/CI con credenciales aisladas del navegador. El API Read Access Token y la API Key recibidos no fueron escritos en el repositorio. Para activar datos reales falta configurar el secreto y desplegar la Edge Function en el Supabase Kanso correcto, seguido de validación end-to-end.**
