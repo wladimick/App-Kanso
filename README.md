@@ -130,7 +130,12 @@ GitHub Actions ejecuta:
 3. `npm run typecheck`;
 4. `npm run build`.
 
-La activación del dashboard conectado a Supabase fue validada exitosamente por CI en el run `31897892465`.
+Última validación de código del bloque TMDB:
+
+- run `31899408056` / Kanso CI #70;
+- `npm ci`: OK;
+- typecheck: OK;
+- build: OK.
 
 ## Auditoría
 
@@ -152,6 +157,7 @@ Registros actuales:
 - `docs/auditoria/2026-08-15-1253-integracion-supabase.md`
 - `docs/auditoria/2026-08-15-1315-activacion-biblioteca-supabase.md`
 - `docs/auditoria/2026-08-15-1342-integracion-tmdb-segura.md`
+- `docs/auditoria/2026-08-15-1350-cierre-tmdb-ci.md`
 
 ## Estado actual
 
@@ -171,4 +177,5 @@ Registros actuales:
 - ⏳ desplegar `tmdb-search` en el Supabase real de Kanso
 - ⏳ prueba funcional de Magic Link contra el proyecto real
 - ⏳ prueba end-to-end de búsqueda TMDB y alta en `library_items`
+- ⏳ logo TMDB aprobado en créditos antes de publicación pública
 - ⏳ AniList
