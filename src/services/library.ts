@@ -26,38 +26,66 @@ export async function listLibrary(userId: string) {
   return data
 }
 
-export async function upsertLibraryItem(userId: string, item: LibraryItemInput) {
+async function findLibraryItem(
+  userId: string,
+  source: MediaSource,
+  externalId: string,
+  mediaType: DatabaseMediaType,
+) {
+  const client = requireSupabase()
+  const { data, error } = await client
+    .from('library_items')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('source', source)
+    .eq('external_id', externalId)
+    .eq('media_type', mediaType)
+    .maybeSingle()
+
+  if (error) throw error
+  return data
+}
+
+export async function addLibraryItem(userId: string, item: LibraryItemInput) {
+  const existing = await findLibraryItem(userId, item.source, item.externalId, item.mediaType)
+  if (existing) return existing
+
   const client = requireSupabase()
   const now = new Date().toISOString()
   const { data, error } = await client
     .from('library_items')
-    .upsert(
-      {
-        user_id: userId,
-        source: item.source,
-        external_id: item.externalId,
-        media_type: item.mediaType,
-        title: item.title,
-        original_title: item.originalTitle ?? null,
-        poster_url: item.posterUrl ?? null,
-        release_year: item.releaseYear ?? null,
-        status: item.status ?? 'planned',
-        current_season: null,
-        current_episode: null,
-        total_seasons: item.totalSeasons ?? null,
-        total_episodes: item.totalEpisodes ?? null,
-        score: null,
-        notes: null,
-        started_at: null,
-        completed_at: null,
-        updated_at: now,
-      },
-      { onConflict: 'user_id,source,external_id,media_type' },
-    )
+    .insert({
+      user_id: userId,
+      source: item.source,
+      external_id: item.externalId,
+      media_type: item.mediaType,
+      title: item.title,
+      original_title: item.originalTitle ?? null,
+      poster_url: item.posterUrl ?? null,
+      release_year: item.releaseYear ?? null,
+      status: item.status ?? 'planned',
+      current_season: null,
+      current_episode: null,
+      total_seasons: item.totalSeasons ?? null,
+      total_episodes: item.totalEpisodes ?? null,
+      score: null,
+      notes: null,
+      started_at: null,
+      completed_at: null,
+      updated_at: now,
+    })
     .select()
     .single()
 
-  if (error) throw error
+  if (error) {
+    // La restricción única protege contra dos inserciones concurrentes.
+    if (error.code === '23505') {
+      const duplicated = await findLibraryItem(userId, item.source, item.externalId, item.mediaType)
+      if (duplicated) return duplicated
+    }
+    throw error
+  }
+
   return data
 }
 
