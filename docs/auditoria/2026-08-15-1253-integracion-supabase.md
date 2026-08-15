@@ -1,6 +1,6 @@
 # Auditoría · Integración inicial Supabase
 
-**Fecha:** 2026-08-15 12:53 CLT  
+**Fecha de inicio:** 2026-08-15 12:53 CLT  
 **Zona horaria:** America/Santiago  
 **Repositorio:** `wladimick/App-Kanso`  
 **Rama:** `agent/initial-kanso-app`  
@@ -9,7 +9,7 @@
 
 ## 1. Objetivo
 
-Preparar Kanso para persistir biblioteca, progreso y colecciones en Supabase, incorporar autenticación passwordless y dejar una migración segura y versionada antes de conectar TMDB/AniList.
+Preparar Kanso para persistir biblioteca, progreso y colecciones en Supabase, incorporar autenticación passwordless, versionar un esquema seguro y establecer una bitácora de auditoría antes de conectar TMDB/AniList.
 
 ## 2. Estado inicial
 
@@ -19,6 +19,8 @@ Preparar Kanso para persistir biblioteca, progreso y colecciones en Supabase, in
 - Sin esquema SQL versionado.
 - Sin autenticación.
 - Sin protocolo de auditoría en `docs/`.
+- CI inexistente.
+- Sin `package-lock.json` versionado.
 
 ## 3. Verificación previa de Supabase
 
@@ -30,20 +32,22 @@ Resultado:
 - El proyecto Kanso indicado por su URL corresponde al ref `gfqudpbtxhquwsrtahnm`.
 - Al intentar consultar `gfqudpbtxhquwsrtahnm`, Supabase respondió que la conexión actual no tiene permisos para esa acción.
 
-**Decisión:** no ejecutar DDL ni consultas sobre otro proyecto. La migración queda preparada en GitHub pero no se marca como aplicada.
+**Decisión:** no ejecutar DDL ni consultas sobre otro proyecto. La migración queda preparada en GitHub pero no se marca como aplicada. El proyecto WebOps TIBOX no fue modificado.
 
 ## 4. Referencias técnicas verificadas
 
-Se revisó documentación actual de Supabase antes de implementar:
+Antes de implementar se revisó documentación actual de Supabase y las versiones de las dependencias relevantes.
 
-- React + Vite usa `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY`.
-- Las claves `sb_publishable_...` están diseñadas para frontend y deben combinarse con RLS.
+Criterios adoptados:
+
+- React + Vite utiliza `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY`.
+- Las claves `sb_publishable_...` están diseñadas para uso en frontend y deben combinarse con RLS.
 - `sb_secret_...` / `service_role` no deben exponerse en cliente.
-- Magic Link se implementa con `signInWithOtp` y requiere Redirect URLs autorizadas.
-- Supabase JS retiró soporte para Node.js 20 en versiones actuales; el proyecto se fijó en Node.js 22+.
-- Versión estable verificada de `@supabase/supabase-js`: `2.111.0`.
+- Magic Link se implementa mediante `signInWithOtp` y requiere Redirect URLs autorizadas.
+- El proyecto se establece sobre Node.js 22+.
+- `@supabase/supabase-js` se fijó a la versión `2.111.0`.
 
-Fuentes oficiales/primarias consultadas:
+Fuentes consultadas:
 
 - https://supabase.com/docs/guides/getting-started/quickstarts/reactjs
 - https://supabase.com/docs/guides/getting-started/api-keys
@@ -54,63 +58,82 @@ Fuentes oficiales/primarias consultadas:
 
 ## 5. Acciones realizadas
 
-### Runtime y dependencias
+### 5.1 Variables de entorno
 
-- `package.json` actualizado a versión de app `0.2.0`.
-- Se definió Node.js `>=22.0.0`.
-- Se agregó `@supabase/supabase-js` fijado exactamente a `2.111.0`.
-- Se agregó script `npm run typecheck`.
-- Se tiparon variables Vite mediante `src/vite-env.d.ts`.
+`.env.example` quedó configurado con:
 
-### Cliente Supabase
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_PUBLISHABLE_KEY`
+- `VITE_TMDB_ACCESS_TOKEN` preparado pero sin valor.
+
+La publishable key entregada por el usuario se documentó como variable de frontend. No se agregó ninguna clave secreta o `service_role`.
+
+### 5.2 Runtime y dependencias
+
+`package.json` fue actualizado:
+
+- versión de Kanso: `0.2.0`;
+- Node.js: `>=22.0.0`;
+- `@supabase/supabase-js`: `2.111.0` exacto;
+- script `npm run typecheck`;
+- build mantiene `tsc -b && vite build`.
+
+Se creó `src/vite-env.d.ts` para tipar las variables Vite.
+
+### 5.3 Cliente Supabase
 
 Se creó `src/lib/supabase.ts`:
 
-- Inicializa un único cliente browser.
-- Usa únicamente URL + publishable key.
-- Persiste sesión y refresca tokens.
-- Detecta sesiones después de redirects.
-- No rompe el build si las variables no están definidas; expone estado `isSupabaseConfigured`.
+- instancia única del cliente browser;
+- utiliza solamente URL + publishable key;
+- `persistSession: true`;
+- `autoRefreshToken: true`;
+- `detectSessionInUrl: true`;
+- expone `isSupabaseConfigured`;
+- no impide compilar cuando las variables no existen;
+- `requireSupabase()` evita usar servicios de datos si falta configuración.
 
-### Contrato TypeScript de base de datos
+### 5.4 Contrato TypeScript de base de datos
 
 Se creó `src/lib/database.types.ts` con tipos iniciales para:
 
-- `library_items`
-- `collections`
-- `collection_items`
-- `watch_events`
+- `library_items`;
+- `collections`;
+- `collection_items`;
+- `watch_events`.
 
-Los tipos serán regenerados desde Supabase cuando el proyecto Kanso quede accesible mediante el conector.
+Estos tipos son provisionales y deben regenerarse desde Supabase después de aplicar el esquema real.
 
-### Servicio de biblioteca
+### 5.5 Servicio de biblioteca
 
 Se creó `src/services/library.ts` con operaciones iniciales:
 
 - listar biblioteca del usuario;
 - upsert por proveedor + ID externo;
-- actualizar progreso de temporada/episodio;
-- registrar eventos de avance/finalización.
+- actualizar temporada/episodio/estado;
+- registrar eventos de avance o finalización.
 
-### Autenticación
+La intención es que TMDB/AniList sean proveedores de catálogo, mientras que Supabase sea la fuente de verdad del progreso personal.
+
+### 5.6 Autenticación
 
 Se crearon:
 
-- `src/hooks/useAuth.ts`
-- `src/components/AuthPanel.tsx`
-- `src/components/AuthPanel.css`
+- `src/hooks/useAuth.ts`;
+- `src/components/AuthPanel.tsx`;
+- `src/components/AuthPanel.css`.
 
-Funcionalidad:
+Funcionalidad implementada:
 
 - recuperación de sesión browser;
-- escucha de cambios de autenticación;
-- acceso por Magic Link;
+- suscripción a cambios de autenticación;
+- acceso passwordless mediante Magic Link;
 - cierre de sesión;
-- estado visual si Supabase aún no está configurado en runtime.
+- estado visual cuando Supabase no está configurado en runtime.
 
-`src/App.tsx` fue actualizado para incorporar el panel de autenticación sin reemplazar todavía los datos demo por datos remotos.
+`src/App.tsx` fue actualizado para incorporar el panel de autenticación. Los títulos del dashboard continúan siendo datos demo de forma intencional hasta validar la base real.
 
-### Esquema y seguridad
+### 5.7 Esquema y seguridad
 
 Se creó:
 
@@ -126,35 +149,146 @@ Tablas:
 Controles incluidos:
 
 - claves foráneas a `auth.users`;
-- borrado en cascada de datos pertenecientes a usuarios eliminados;
-- restricciones de tipos y estados;
-- puntuación 0–10;
-- claves únicas para impedir duplicados de catálogo;
-- claves foráneas compuestas para impedir cruces entre usuarios en colecciones/eventos;
+- borrado en cascada de datos del usuario;
+- restricciones para proveedor, tipo de medio y estado;
+- puntuación entre 0 y 10;
+- claves únicas para impedir duplicados de catálogo por usuario;
+- claves foráneas compuestas para impedir relaciones cruzadas entre usuarios;
 - índices por usuario, estado, tipo y fecha;
 - RLS habilitado en todas las tablas;
-- permisos revocados al rol `anon`;
-- permisos CRUD otorgados a `authenticated` y restringidos mediante RLS;
-- políticas `SELECT`, `INSERT`, `UPDATE` y `DELETE` basadas en `(select auth.uid()) = user_id`;
-- políticas UPDATE incluyen `USING` y `WITH CHECK`.
+- permisos revocados a `anon`;
+- CRUD otorgado a `authenticated`, condicionado por RLS;
+- políticas `SELECT`, `INSERT`, `UPDATE` y `DELETE` con `(select auth.uid()) = user_id`;
+- políticas UPDATE con `USING` y `WITH CHECK`.
 
-## 6. Documentación
+La migración **no fue aplicada** por falta de autorización del conector al proyecto Supabase Kanso.
 
-- Se creó `docs/auditoria/README.md` como protocolo obligatorio de auditoría futura.
-- Se actualizó `docs/architecture.md` con arquitectura, modelo de datos, autenticación, seguridad y estado real por fases.
+### 5.8 Documentación
 
-## 7. CI
+Se creó `docs/auditoria/README.md` como protocolo obligatorio para los bloques de trabajo futuros.
 
-Se creó `.github/workflows/ci.yml` para:
+Se actualizó `docs/architecture.md` con:
 
-1. usar Node.js 22;
-2. instalar dependencias;
-3. ejecutar TypeScript (`npm run typecheck`);
-4. ejecutar build (`npm run build`).
+- separación catálogo/progreso;
+- modelo de datos;
+- autenticación;
+- seguridad;
+- runtime;
+- estado real de las fases.
 
-Al momento de crear este registro, el primer workflow `Kanso CI` fue aceptado por GitHub Actions y quedó inicialmente en estado `queued` bajo el run `31897031995`.
+Se actualizó `README.md` con:
 
-## 8. Limitaciones / no ejecutado
+- requisitos;
+- instalación local;
+- variables de entorno;
+- migración;
+- advertencias de seguridad;
+- comandos de calidad;
+- protocolo de auditoría;
+- estado actual del proyecto.
+
+### 5.9 Pull Request
+
+El PR `#1` se mantuvo como **draft** y su descripción fue actualizada para reflejar el alcance real de Supabase, RLS, autenticación, lockfile, CI, auditoría y pendientes de autorización del proyecto Kanso.
+
+## 6. CI, incidencia detectada y corrección
+
+Se creó `.github/workflows/ci.yml` para validar Kanso en GitHub Actions.
+
+### Primer intento
+
+Run: `31897031995`.
+
+Resultado:
+
+- Checkout: OK.
+- Node.js 22: OK.
+- Instalación de dependencias: OK.
+- Typecheck: **FAIL**.
+- Build: omitido por el fallo anterior.
+
+Errores encontrados:
+
+- `src/components/AuthPanel.tsx(27,51): TS18047: 'supabase' is possibly 'null'`.
+- `src/components/AuthPanel.tsx(40,29): TS18047: 'supabase' is possibly 'null'`.
+
+No se ocultó el fallo ni se desactivó TypeScript. Se corrigió el narrowing del cliente Supabase mediante una referencia local validada después del guard.
+
+Commit de corrección:
+
+`2ce09b2bff49c08e203a33bf6dc57c7e6f9db906` — `Fix Supabase client nullability in auth panel`.
+
+### Actualización del runtime de GitHub Actions
+
+Los logs también mostraron advertencias de runtime sobre acciones antiguas. El workflow fue actualizado a:
+
+- `actions/checkout@v6`;
+- `actions/setup-node@v6`;
+- Node.js 22 para la aplicación.
+
+Commit:
+
+`e17fcae6531980b53996c56230743346852076b5` — `Update CI actions for Node 24 action runtime`.
+
+### Validación posterior
+
+Run de push #7: `31897100205`.
+
+Resultado: **SUCCESS**.
+
+Además, el run de PR #8 finalizó exitosamente.
+
+## 7. Lockfile y reproducibilidad
+
+La ejecución inicial no tenía `package-lock.json` versionado. Como GitHub Actions sí tenía acceso correcto a npm, se utilizó temporalmente el workflow validado para generar el lockfile después de instalar, typecheckear y construir la app.
+
+Acciones:
+
+1. Se otorgó temporalmente `contents: write` solo al workflow de generación.
+2. Se generó `package-lock.json` mediante npm.
+3. GitHub Actions creó el commit:
+   - `041f71fced7281b640d56265c3c510692d5a5a36` — `Add npm dependency lockfile`.
+4. Se verificó que el lockfile usa `lockfileVersion: 3` y contiene `@supabase/supabase-js: 2.111.0`.
+5. Inmediatamente después, el workflow volvió a `permissions: contents: read`.
+6. La instalación CI final se cambió de `npm install` a `npm ci` y se habilitó cache npm.
+
+Run de push #12: `31897163477`.
+
+Resultado:
+
+- instalación: OK;
+- typecheck: OK;
+- build: OK;
+- persistencia del lockfile: OK.
+
+Commit de endurecimiento final:
+
+`7c7e76871a12d059891f58a9b44b3d95367394b4` — `Harden CI with lockfile and read-only permissions`.
+
+Run endurecido #14: `31897195835`.
+
+Resultado final:
+
+- `npm ci`: **SUCCESS**;
+- `npm run typecheck`: **SUCCESS**;
+- `npm run build`: **SUCCESS**;
+- permisos del workflow: `contents: read`.
+
+## 8. Validaciones completadas
+
+- Dependencias instalables en Node.js 22: ✅
+- `package-lock.json` reproducible y versionado: ✅
+- TypeScript estricto: ✅
+- Build Vite: ✅
+- Cliente Supabase compila sin variables runtime: ✅
+- Magic Link integrado a nivel de código: ✅
+- Migración SQL versionada: ✅
+- RLS definido en todas las tablas personales: ✅
+- `anon` sin CRUD sobre tablas personales: ✅
+- CI con permisos de solo lectura: ✅
+- PR #1 actualizado con estado real: ✅
+
+## 9. Limitaciones / no ejecutado
 
 ### Migración Supabase
 
@@ -164,17 +298,22 @@ Al momento de crear este registro, el primer workflow `Kanso CI` fue aceptado po
 
 **No ejecutados** sobre Kanso por la misma falta de permisos. Deben ejecutarse después de aplicar la migración.
 
-### Lockfile npm
+### Tipos generados desde base real
 
-No se generó `package-lock.json` desde el entorno de ejecución porque la salida de red directa hacia npm no respondió. La dependencia Supabase quedó fijada a versión exacta en `package.json`; el lockfile sigue pendiente y debe generarse/confirmarse en un entorno con acceso npm antes de cerrar la etapa.
+`database.types.ts` es un contrato inicial manual. Debe reemplazarse/regenerarse desde Supabase una vez que el esquema exista en el proyecto Kanso.
+
+### Redirect URLs de Auth
+
+El código de Magic Link está implementado, pero las Redirect URLs de desarrollo/producción no pueden cerrarse hasta conocer/autorizar los dominios finales en Supabase Auth.
 
 ### Datos demo
 
-El dashboard sigue usando datos de demostración de forma intencional. La capa Supabase ya existe, pero no se cambia la fuente del UI hasta que la migración haya sido aplicada y validada.
+El dashboard continúa usando datos de demostración deliberadamente. No se cambia la fuente de verdad del UI antes de aplicar y validar la migración.
 
-## 9. Archivos creados
+## 10. Archivos creados durante el bloque
 
 - `.github/workflows/ci.yml`
+- `package-lock.json`
 - `src/vite-env.d.ts`
 - `src/lib/database.types.ts`
 - `src/lib/supabase.ts`
@@ -186,24 +325,37 @@ El dashboard sigue usando datos de demostración de forma intencional. La capa S
 - `docs/auditoria/README.md`
 - `docs/auditoria/2026-08-15-1253-integracion-supabase.md`
 
-## 10. Archivos modificados
+## 11. Archivos modificados durante el bloque
 
 - `.env.example`
 - `package.json`
 - `src/App.tsx`
 - `docs/architecture.md`
+- `README.md`
+- `.github/workflows/ci.yml` fue ajustado sucesivamente hasta su versión final endurecida.
 
-## 11. Pendientes recomendados
+## 12. Commits relevantes
 
-1. Dar acceso del proyecto Kanso al conector Supabase de esta sesión.
-2. Aplicar `20260815125300_initial_kanso_schema.sql` como migración.
-3. Ejecutar consultas de verificación y Supabase Security/Performance Advisors.
-4. Regenerar `database.types.ts` desde el esquema real.
-5. Generar y versionar `package-lock.json`.
-6. Configurar Redirect URLs de Supabase Auth para desarrollo y producción.
-7. Sustituir progresivamente los datos demo por `library_items` del usuario autenticado.
-8. Conectar TMDB como siguiente fuente de catálogo.
+- `2ce09b2bff49c08e203a33bf6dc57c7e6f9db906` — fix nullabilidad Supabase.
+- `e17fcae6531980b53996c56230743346852076b5` — Actions v6.
+- `5fbfcb836aa03a7c12fcccc808bba9cf8b22441d` — preparación de generación de lockfile.
+- `041f71fced7281b640d56265c3c510692d5a5a36` — lockfile generado por GitHub Actions.
+- `9b4fb2ba3cfb359f071a2d051446909ed0023bed` — README y flujo documental.
+- `7c7e76871a12d059891f58a9b44b3d95367394b4` — CI final con `npm ci` y permisos read-only.
 
-## 12. Estado del bloque
+## 13. Pendientes recomendados
 
-**Código de integración preparado. Base de datos Kanso pendiente de autorización/aplicación. CI pendiente de resultado final al cierre inicial de este registro.**
+1. Autorizar/conectar el proyecto Supabase Kanso `gfqudpbtxhquwsrtahnm`.
+2. Aplicar `20260815125300_initial_kanso_schema.sql`.
+3. Ejecutar consultas funcionales de verificación.
+4. Ejecutar Supabase Security Advisors y Performance Advisors.
+5. Corregir cualquier advisory antes de conectar el UI real.
+6. Regenerar `database.types.ts` desde el esquema aplicado.
+7. Configurar Redirect URLs de Supabase Auth.
+8. Sustituir progresivamente los datos demo por `library_items` del usuario autenticado.
+9. Integrar TMDB como próxima fuente de catálogo.
+10. Integrar AniList después de estabilizar películas/series.
+
+## 14. Estado de cierre del bloque
+
+**Integración Supabase preparada en código, esquema seguro versionado, autenticación incorporada, dependencias bloqueadas y CI completamente verde. La única dependencia externa que impide activar persistencia real es la falta de acceso del conector al proyecto Supabase Kanso; por seguridad la migración permanece sin aplicar hasta contar con ese acceso.**
