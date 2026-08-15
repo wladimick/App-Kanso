@@ -8,8 +8,9 @@ export function AuthPanel() {
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const client = supabase
 
-  if (!isSupabaseConfigured || !supabase) {
+  if (!isSupabaseConfigured || !client) {
     return <div className="auth-state offline">Supabase pendiente</div>
   }
 
@@ -24,7 +25,7 @@ export function AuthPanel() {
           <small>Sesión activa</small>
           <strong>{session.user.email ?? 'Usuario Kanso'}</strong>
         </div>
-        <button type="button" onClick={() => void supabase.auth.signOut()}>Salir</button>
+        <button type="button" onClick={() => void client.auth.signOut()}>Salir</button>
       </div>
     )
   }
@@ -37,7 +38,7 @@ export function AuthPanel() {
     setSubmitting(true)
     setMessage('')
 
-    const { error } = await supabase.auth.signInWithOtp({
+    const { error } = await client.auth.signInWithOtp({
       email: normalizedEmail,
       options: {
         emailRedirectTo: window.location.origin,
