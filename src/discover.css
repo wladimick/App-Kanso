@@ -27,9 +27,58 @@
   .discover-grid { grid-template-columns: 1fr; }
 }
 
-@media (max-width: 560px) {
-  .discover-search { grid-template-columns: 1fr; }
-  .discover-search button { min-height: 44px; }
-  .discover-card { grid-template-columns: 95px 1fr; }
+@media (max-width: 760px) {
+  .discover-block { padding-top: 26px; }
+  .discover-heading { width: 100%; align-items: flex-start; }
+  .provider-badge { font-size: 10px; }
+  .discover-search { grid-template-columns: 1fr; gap: 8px; }
+  .discover-search input {
+    min-height: 48px;
+    padding: 13px 14px;
+    font-size: 16px;
+  }
+  .discover-search button { min-height: 46px; padding: 0 16px; }
+  .discover-note, .discover-summary { line-height: 1.5; }
+  .discover-grid { gap: 10px; margin-top: 14px; }
+  .discover-card {
+    grid-template-columns: 96px minmax(0,1fr);
+    min-height: 170px;
+    border-radius: 15px;
+  }
   .discover-poster { min-height: 170px; }
+  .discover-content { padding: 12px; }
+  .discover-content .meta { margin-bottom: 5px; }
+  .discover-content h3 {
+    margin-bottom: 3px;
+    font-size: 15px;
+    line-height: 1.2;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .discover-content small {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .discover-content p {
+    margin: 7px 0 10px;
+    font-size: 11px;
+    line-height: 1.4;
+    -webkit-line-clamp: 3;
+  }
+  .catalog-action {
+    min-height: 42px;
+    padding: 9px;
+    font-size: 11px;
+  }
+  .tmdb-attribution { padding-bottom: 4px; }
+}
+
+@media (max-width: 390px) {
+  .discover-card { grid-template-columns: 86px minmax(0,1fr); }
+  .discover-poster { min-height: 160px; }
+  .discover-content { padding: 10px; }
 }
