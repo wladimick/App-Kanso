@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { AuthPanel } from './components/AuthPanel'
 import type { LibraryItem, MediaType, WatchStatus } from './types'
 
 const initialItems: LibraryItem[] = [
@@ -78,9 +79,9 @@ export default function App() {
         </nav>
 
         <div className="sidebar-note">
-          <span>Próxima integración</span>
-          <strong>TMDB + AniList</strong>
-          <p>El catálogo externo se conectará sin mezclarlo con tu progreso personal.</p>
+          <span>Backend preparado</span>
+          <strong>Supabase + TMDB + AniList</strong>
+          <p>Tu progreso vive en Kanso; los proveedores externos solo entregan el catálogo.</p>
         </div>
       </aside>
 
@@ -90,10 +91,13 @@ export default function App() {
             <p className="eyebrow">Biblioteca personal</p>
             <h1>¿Qué quieres continuar?</h1>
           </div>
-          <label className="search-box">
-            <span>⌕</span>
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar en Kanso..." />
-          </label>
+          <div className="topbar-actions">
+            <AuthPanel />
+            <label className="search-box">
+              <span>⌕</span>
+              <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar en Kanso..." />
+            </label>
+          </div>
         </header>
 
         <section className="stats-grid" aria-label="Resumen">
