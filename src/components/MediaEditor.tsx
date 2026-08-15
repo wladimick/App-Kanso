@@ -23,9 +23,9 @@ type Props = {
 }
 
 function optionalNumber(value: string) {
-  if (!value.trim()) return undefined
+  if (!value.trim()) return null
   const parsed = Number(value)
-  return Number.isFinite(parsed) ? parsed : undefined
+  return Number.isFinite(parsed) ? parsed : null
 }
 
 export function MediaEditor({ item, onClose, onSave, onDelete }: Props) {
@@ -64,13 +64,13 @@ export function MediaEditor({ item, onClose, onSave, onDelete }: Props) {
       await onSave({
         status,
         type,
-        currentSeason: type === 'movie' ? undefined : optionalNumber(season),
-        currentEpisode: type === 'movie' ? undefined : optionalNumber(episode),
-        totalSeasons: type === 'movie' ? undefined : optionalNumber(totalSeasons),
-        totalEpisodes: type === 'movie' ? undefined : optionalNumber(totalEpisodes),
+        currentSeason: type === 'movie' ? null : optionalNumber(season),
+        currentEpisode: type === 'movie' ? null : optionalNumber(episode),
+        totalSeasons: type === 'movie' ? null : optionalNumber(totalSeasons),
+        totalEpisodes: type === 'movie' ? null : optionalNumber(totalEpisodes),
         score: optionalNumber(score),
         favorite,
-        notes: notes.trim(),
+        notes: notes.trim() || null,
       })
       setMessage('Cambios guardados en Kanso.')
     } catch {
