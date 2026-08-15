@@ -14,6 +14,18 @@ export type LibraryItemInput = {
   status?: DatabaseWatchStatus
 }
 
+export type LibraryItemUpdateInput = {
+  mediaType?: DatabaseMediaType
+  status?: DatabaseWatchStatus
+  currentSeason?: number | null
+  currentEpisode?: number | null
+  totalSeasons?: number | null
+  totalEpisodes?: number | null
+  score?: number | null
+  favorite?: boolean
+  notes?: string | null
+}
+
 export async function listLibrary(userId: string) {
   const client = requireSupabase()
   const { data, error } = await client
@@ -78,7 +90,6 @@ export async function addLibraryItem(userId: string, item: LibraryItemInput) {
     .single()
 
   if (error) {
-    // La restricción única protege contra dos inserciones concurrentes.
     if (error.code === '23505') {
       const duplicated = await findLibraryItem(userId, item.source, item.externalId, item.mediaType)
       if (duplicated) return duplicated
@@ -87,6 +98,53 @@ export async function addLibraryItem(userId: string, item: LibraryItemInput) {
   }
 
   return data
+}
+
+export async function updateLibraryItem(
+  userId: string,
+  libraryItemId: string,
+  patch: LibraryItemUpdateInput,
+) {
+  const client = requireSupabase()
+  const now = new Date().toISOString()
+  const status = patch.status
+
+  const updates = {
+    media_type: patch.mediaType,
+    status,
+    current_season: patch.currentSeason,
+    current_episode: patch.currentEpisode,
+    total_seasons: patch.totalSeasons,
+    total_episodes: patch.totalEpisodes,
+    score: patch.score,
+    favorite: patch.favorite,
+    notes: patch.notes,
+    started_at: status === 'watching' ? now.slice(0, 10) : undefined,
+    completed_at: status === 'completed' ? now.slice(0, 10) : status ? null : undefined,
+    updated_at: now,
+  }
+
+  const { data, error } = await client
+    .from('library_items')
+    .update(updates)
+    .eq('id', libraryItemId)
+    .eq('user_id', userId)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function deleteLibraryItem(userId: string, libraryItemId: string) {
+  const client = requireSupabase()
+  const { error } = await client
+    .from('library_items')
+    .delete()
+    .eq('id', libraryItemId)
+    .eq('user_id', userId)
+
+  if (error) throw error
 }
 
 export async function updateProgress(
