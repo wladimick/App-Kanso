@@ -1,19 +1,33 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { AuthPanel } from './components/AuthPanel'
 import { DiscoverPanel } from './components/DiscoverPanel'
+import { MediaEditor } from './components/MediaEditor'
 import { useAuth } from './hooks/useAuth'
 import { useLibrary } from './hooks/useLibrary'
 import type { TmdbSearchResult } from './services/tmdb'
-import type { LibraryItem, MediaType, WatchStatus } from './types'
+import type { LibraryItem, LibraryItemPatch, MediaType, WatchStatus } from './types'
 
 const demoItems: LibraryItem[] = [
-  { id: 'hxh', title: 'Hunter × Hunter', type: 'anime', status: 'watching', year: 2011, currentEpisode: 137, totalEpisodes: 148, score: 10, accent: 'HXH' },
+  { id: 'hxh', title: 'Hunter × Hunter', type: 'anime', status: 'watching', year: 2011, currentEpisode: 137, totalEpisodes: 148, score: 10, favorite: true, accent: 'HXH' },
   { id: 'black-rabbit', title: 'Black Rabbit', type: 'series', status: 'watching', year: 2025, currentEpisode: 1, totalEpisodes: 8, accent: 'BR' },
   { id: 'ahs', title: 'American Horror Story', type: 'series', status: 'paused', year: 2011, currentEpisode: 63, accent: 'AHS' },
-  { id: 'endgame', title: 'Avengers: Endgame', type: 'movie', status: 'completed', year: 2019, score: 9, collection: 'Marvel', accent: 'A' },
+  { id: 'endgame', title: 'Avengers: Endgame', type: 'movie', status: 'completed', year: 2019, score: 9, favorite: true, collection: 'Marvel', accent: 'A' },
   { id: 'doomsday', title: 'Avengers: Doomsday', type: 'movie', status: 'planned', year: 2026, collection: 'Marvel', accent: 'AD' },
   { id: 'platinum-end', title: 'Platinum End', type: 'anime', status: 'paused', year: 2021, currentEpisode: 8, totalEpisodes: 24, accent: 'PE' },
 ]
+
+type AppPage = 'home' | 'library' | 'wishlist' | 'watching' | 'completed' | 'favorites' | 'collections' | 'discover'
+
+const pageMeta: Record<AppPage, { eyebrow: string; title: string; description: string }> = {
+  home: { eyebrow: 'Biblioteca personal', title: '¿Qué quieres continuar?', description: 'Tu centro de control para todo lo que ves.' },
+  library: { eyebrow: 'Tu catálogo', title: 'Mi biblioteca', description: 'Solo los títulos que agregaste a Kanso.' },
+  wishlist: { eyebrow: 'Para después', title: 'Lista de deseos', description: 'Películas, series y anime que quieres ver.' },
+  watching: { eyebrow: 'En progreso', title: 'Viendo ahora', description: 'Continúa exactamente donde quedaste.' },
+  completed: { eyebrow: 'Historial', title: 'Completados', description: 'Todo lo que ya terminaste o viste.' },
+  favorites: { eyebrow: 'Lo mejor para ti', title: 'Favoritos', description: 'Los títulos que decidiste destacar.' },
+  collections: { eyebrow: 'Organización', title: 'Colecciones', description: 'Agrupa sagas, universos y listas personales.' },
+  discover: { eyebrow: 'Catálogo externo', title: 'Descubrir', description: 'Busca títulos nuevos y agrégalos a Kanso.' },
+}
 
 const labels: Record<WatchStatus, string> = {
   planned: 'Pendiente',
@@ -29,11 +43,6 @@ const typeLabels: Record<MediaType, string> = {
   anime: 'Anime',
 }
 
-function progress(item: LibraryItem) {
-  if (!item.currentEpisode || !item.totalEpisodes) return null
-  return Math.min(100, Math.round((item.currentEpisode / item.totalEpisodes) * 100))
-}
-
 function initials(title: string) {
   return title
     .split(/\s+/)
@@ -41,6 +50,16 @@ function initials(title: string) {
     .slice(0, 3)
     .map((part) => part[0]?.toUpperCase())
     .join('') || 'K'
+}
+
+function progress(item: LibraryItem) {
+  if (item.currentEpisode == null || !item.totalEpisodes) return null
+  return Math.min(100, Math.round((item.currentEpisode / item.totalEpisodes) * 100))
+}
+
+function pageFromUrl(): AppPage {
+  const value = new URLSearchParams(window.location.search).get('view') as AppPage | null
+  return value && value in pageMeta ? value : 'home'
 }
 
 function CoverImage({ item }: { item: LibraryItem }) {
@@ -52,12 +71,54 @@ function CoverImage({ item }: { item: LibraryItem }) {
           src={item.posterUrl}
           alt={`Poster de ${item.title}`}
           loading="lazy"
-          onError={(event) => {
-            event.currentTarget.style.display = 'none'
-          }}
+          onError={(event) => { event.currentTarget.style.display = 'none' }}
         />
       )}
     </>
+  )
+}
+
+function MediaGrid({ items, onOpen, emptyTitle, emptyText }: {
+  items: LibraryItem[]
+  onOpen: (item: LibraryItem) => void
+  emptyTitle: string
+  emptyText: string
+}) {
+  if (items.length === 0) {
+    return (
+      <div className="empty-state">
+        <strong>{emptyTitle}</strong>
+        <p>{emptyText}</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="library-grid">
+      {items.map((item) => (
+        <button className="media-card media-card-button" key={item.id} type="button" onClick={() => onOpen(item)}>
+          <div className="cover">
+            <CoverImage item={item} />
+            <em>{labels[item.status]}</em>
+            {item.favorite && <b className="favorite-badge">★</b>}
+          </div>
+          <div className="media-body">
+            <div className="meta"><span>{typeLabels[item.type]}</span><span>{item.year}</span></div>
+            <h3>{item.title}</h3>
+            {(item.currentEpisode != null || item.score != null) && (
+              <div className="card-detail-line">
+                {item.currentEpisode != null && item.type !== 'movie' && <span>T{item.currentSeason ?? 1} · E{item.currentEpisode}</span>}
+                {item.score != null && <strong>★ {item.score}/10</strong>}
+              </div>
+            )}
+            <div className="media-footer">
+              <span>{item.collection ?? labels[item.status]}</span>
+              <span>Editar →</span>
+            </div>
+          </div>
+        </button>
+      ))}
+    </div>
   )
 }
 
@@ -68,11 +129,33 @@ export default function App() {
     loading: libraryLoading,
     error: libraryError,
     addItem,
+    editItem,
+    removeItem,
     advanceEpisode: advanceRemoteEpisode,
   } = useLibrary(session?.user.id)
+
   const [localItems, setLocalItems] = useState(demoItems)
+  const [page, setPage] = useState<AppPage>(() => pageFromUrl())
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<'all' | MediaType>('all')
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+
+  useEffect(() => {
+    const syncPage = () => setPage(pageFromUrl())
+    window.addEventListener('popstate', syncPage)
+    return () => window.removeEventListener('popstate', syncPage)
+  }, [])
+
+  const navigate = (next: AppPage) => {
+    const url = new URL(window.location.href)
+    if (next === 'home') url.searchParams.delete('view')
+    else url.searchParams.set('view', next)
+    window.history.pushState({}, '', url)
+    setPage(next)
+    setQuery('')
+    setFilter('all')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   const remoteItems = useMemo<LibraryItem[]>(() => rows.flatMap((row) => {
     if (row.media_type === 'manga') return []
@@ -84,49 +167,47 @@ export default function App() {
       status: row.status,
       year: row.release_year ?? new Date().getFullYear(),
       posterUrl: row.poster_url ?? undefined,
+      currentSeason: row.current_season ?? undefined,
       currentEpisode: row.current_episode ?? undefined,
+      totalSeasons: row.total_seasons ?? undefined,
       totalEpisodes: row.total_episodes ?? undefined,
       score: row.score ?? undefined,
+      favorite: row.favorite,
+      notes: row.notes ?? undefined,
       accent: initials(row.title),
     }]
   }), [rows])
 
   const items = session ? remoteItems : localItems
+  const selectedItem = selectedId ? items.find((item) => item.id === selectedId) ?? null : null
+
+  const watching = items.filter((item) => item.status === 'watching')
+  const completed = items.filter((item) => item.status === 'completed')
+  const planned = items.filter((item) => item.status === 'planned')
+  const favorites = items.filter((item) => item.favorite)
+
+  const pageItems = useMemo(() => {
+    switch (page) {
+      case 'wishlist': return items.filter((item) => item.status === 'planned')
+      case 'watching': return items.filter((item) => item.status === 'watching')
+      case 'completed': return items.filter((item) => item.status === 'completed')
+      case 'favorites': return items.filter((item) => item.favorite)
+      default: return items
+    }
+  }, [items, page])
 
   const visibleItems = useMemo(() => {
     const normalized = query.trim().toLowerCase()
-    return items.filter((item) => {
+    return pageItems.filter((item) => {
       const matchesType = filter === 'all' || item.type === filter
       const matchesSearch = !normalized || item.title.toLowerCase().includes(normalized)
       return matchesType && matchesSearch
     })
-  }, [items, query, filter])
+  }, [pageItems, query, filter])
 
   const existingCatalogKeys = useMemo(() => new Set(
-    rows.map((row) => `${row.source}:${row.media_type}:${row.external_id}`),
+    rows.map((row) => `${row.source}:${row.external_id}`),
   ), [rows])
-
-  const watching = items.filter((item) => item.status === 'watching')
-  const completed = items.filter((item) => item.status === 'completed').length
-  const planned = items.filter((item) => item.status === 'planned').length
-
-  const advanceEpisode = (id: string) => {
-    if (session) {
-      const row = rows.find((item) => item.id === id)
-      if (row) void advanceRemoteEpisode(row)
-      return
-    }
-
-    setLocalItems((current) => current.map((item) => {
-      if (item.id !== id || !item.totalEpisodes) return item
-      const next = Math.min((item.currentEpisode ?? 0) + 1, item.totalEpisodes)
-      return {
-        ...item,
-        currentEpisode: next,
-        status: next === item.totalEpisodes ? 'completed' : 'watching',
-      }
-    }))
-  }
 
   const addTmdbItem = async (item: TmdbSearchResult) => {
     await addItem({
@@ -141,6 +222,41 @@ export default function App() {
     })
   }
 
+  const saveSelected = async (patch: LibraryItemPatch) => {
+    if (!session || !selectedItem) return
+    await editItem(selectedItem.id, {
+      mediaType: patch.type,
+      status: patch.status,
+      currentSeason: patch.currentSeason,
+      currentEpisode: patch.currentEpisode,
+      totalSeasons: patch.totalSeasons,
+      totalEpisodes: patch.totalEpisodes,
+      score: patch.score,
+      favorite: patch.favorite,
+      notes: patch.notes,
+    })
+  }
+
+  const deleteSelected = async () => {
+    if (!session || !selectedItem) return
+    await removeItem(selectedItem.id)
+    setSelectedId(null)
+  }
+
+  const advanceEpisode = (id: string) => {
+    if (session) {
+      const row = rows.find((item) => item.id === id)
+      if (row) void advanceRemoteEpisode(row)
+      return
+    }
+
+    setLocalItems((current) => current.map((item) => {
+      if (item.id !== id || !item.totalEpisodes) return item
+      const next = Math.min((item.currentEpisode ?? 0) + 1, item.totalEpisodes)
+      return { ...item, currentEpisode: next, status: next === item.totalEpisodes ? 'completed' : 'watching' }
+    }))
+  }
+
   const dataMode = authLoading
     ? 'Comprobando sesión…'
     : session
@@ -149,44 +265,67 @@ export default function App() {
         : 'Biblioteca sincronizada con Supabase'
       : 'Modo demostración · inicia sesión para usar tus datos reales'
 
+  const meta = pageMeta[page]
+  const listPage = ['library', 'wishlist', 'watching', 'completed', 'favorites'].includes(page)
+
+  const navItems: Array<{ page: AppPage; label: string; count?: number }> = [
+    { page: 'home', label: 'Inicio' },
+    { page: 'library', label: 'Mi biblioteca', count: items.length },
+    { page: 'wishlist', label: 'Lista de deseos', count: planned.length },
+    { page: 'watching', label: 'Viendo', count: watching.length },
+    { page: 'completed', label: 'Completados', count: completed.length },
+    { page: 'favorites', label: 'Favoritos', count: favorites.length },
+    { page: 'collections', label: 'Colecciones' },
+    { page: 'discover', label: 'Descubrir' },
+  ]
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <div className="brand">
+        <button type="button" className="brand brand-button" onClick={() => navigate('home')}>
           <span className="brand-mark">K</span>
-          <div>
+          <span>
             <strong>Kanso</strong>
             <small>Tu universo, ordenado.</small>
-          </div>
-        </div>
+          </span>
+        </button>
 
         <nav className="nav-list" aria-label="Navegación principal">
-          <button className="nav-item active">Inicio</button>
-          <button className="nav-item">Mi biblioteca</button>
-          <button className="nav-item">Colecciones</button>
-          <a className="nav-item nav-link" href="#discover">Descubrir</a>
+          {navItems.map((item, index) => (
+            <div key={item.page} className={index === 1 || index === 6 ? 'nav-group-start' : undefined}>
+              {index === 1 && <span className="nav-section-label">Tu biblioteca</span>}
+              {index === 6 && <span className="nav-section-label">Explorar</span>}
+              <button className={page === item.page ? 'nav-item active' : 'nav-item'} type="button" onClick={() => navigate(item.page)}>
+                <span>{item.label}</span>
+                {item.count != null && <b>{item.count}</b>}
+              </button>
+            </div>
+          ))}
         </nav>
 
         <div className="sidebar-note">
-          <span>Arquitectura</span>
-          <strong>Supabase + TMDB + AniList</strong>
-          <p>Tu progreso vive en Kanso; las credenciales externas permanecen en funciones de servidor.</p>
+          <span>Tu cuenta</span>
+          <strong>{session?.user.email ?? 'Modo demostración'}</strong>
+          <p>{session ? `${items.length} títulos guardados y protegidos por tu usuario.` : 'Inicia sesión para guardar tu progreso en Supabase.'}</p>
         </div>
       </aside>
 
       <main className="content">
         <header className="topbar">
           <div>
-            <p className="eyebrow">Biblioteca personal</p>
-            <h1>¿Qué quieres continuar?</h1>
+            <p className="eyebrow">{meta.eyebrow}</p>
+            <h1>{meta.title}</h1>
+            <p className="page-description">{meta.description}</p>
             <p className={session ? 'data-mode synced' : 'data-mode'}>{dataMode}</p>
           </div>
           <div className="topbar-actions">
             <AuthPanel />
-            <label className="search-box">
-              <span>⌕</span>
-              <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar en mi biblioteca..." />
-            </label>
+            {listPage && (
+              <label className="search-box">
+                <span>⌕</span>
+                <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar en esta lista…" />
+              </label>
+            )}
           </div>
         </header>
 
@@ -197,93 +336,106 @@ export default function App() {
           </div>
         )}
 
-        <section className="stats-grid" aria-label="Resumen">
-          <article className="stat-card"><span>Viendo ahora</span><strong>{watching.length}</strong><small>títulos activos</small></article>
-          <article className="stat-card"><span>Completados</span><strong>{completed}</strong><small>en tu historial</small></article>
-          <article className="stat-card"><span>Por ver</span><strong>{planned}</strong><small>en tu lista</small></article>
-          <article className="stat-card featured"><span>Colección activa</span><strong>Marvel</strong><small>Preparando Doomsday</small></article>
-        </section>
+        {page === 'home' && (
+          <>
+            <section className="stats-grid" aria-label="Resumen">
+              <button type="button" className="stat-card stat-button" onClick={() => navigate('watching')}><span>Viendo ahora</span><strong>{watching.length}</strong><small>títulos activos</small></button>
+              <button type="button" className="stat-card stat-button" onClick={() => navigate('completed')}><span>Completados</span><strong>{completed.length}</strong><small>en tu historial</small></button>
+              <button type="button" className="stat-card stat-button" onClick={() => navigate('wishlist')}><span>Lista de deseos</span><strong>{planned.length}</strong><small>por ver</small></button>
+              <button type="button" className="stat-card stat-button featured" onClick={() => navigate('favorites')}><span>Favoritos</span><strong>{favorites.length}</strong><small>títulos destacados</small></button>
+            </section>
 
-        <section className="section-block">
-          <div className="section-heading">
-            <div><p className="eyebrow">Continuar</p><h2>Viendo ahora</h2></div>
-          </div>
-          {session && !libraryLoading && watching.length === 0 ? (
-            <div className="empty-state">
-              <strong>Aún no tienes títulos en progreso.</strong>
-              <p>Busca un título en TMDB, agrégalo a Kanso y luego podremos comenzar a registrar su progreso.</p>
-            </div>
-          ) : (
-            <div className="continue-grid">
-              {watching.map((item) => {
-                const value = progress(item)
-                return (
-                  <article className="continue-card" key={item.id}>
-                    <div className="cover large"><CoverImage item={item} /></div>
-                    <div className="continue-body">
-                      <div className="meta"><span>{typeLabels[item.type]}</span><span>{item.year}</span></div>
-                      <h3>{item.title}</h3>
-                      {item.currentEpisode && item.totalEpisodes && (
-                        <>
-                          <p>Episodio {item.currentEpisode} de {item.totalEpisodes}</p>
-                          <div className="progress-track"><span style={{ width: `${value}%` }} /></div>
-                          <small>{value}% completado</small>
-                          <button className="primary-action" onClick={() => advanceEpisode(item.id)}>Marcar siguiente episodio +1</button>
-                        </>
-                      )}
-                    </div>
-                  </article>
-                )
-              })}
-            </div>
-          )}
-        </section>
+            <section className="section-block">
+              <div className="section-heading">
+                <div><p className="eyebrow">Continuar</p><h2>Viendo ahora</h2></div>
+                <button className="text-action" type="button" onClick={() => navigate('watching')}>Ver todos →</button>
+              </div>
+              {watching.length === 0 ? (
+                <div className="empty-state"><strong>Aún no tienes títulos en progreso.</strong><p>Abre un título de tu biblioteca y cambia su estado a “Viendo”.</p></div>
+              ) : (
+                <div className="continue-grid">
+                  {watching.slice(0, 4).map((item) => {
+                    const value = progress(item)
+                    return (
+                      <article className="continue-card" key={item.id}>
+                        <button className="cover large cover-button" type="button" onClick={() => setSelectedId(item.id)}><CoverImage item={item} /></button>
+                        <div className="continue-body">
+                          <div className="meta"><span>{typeLabels[item.type]}</span><span>{item.year}</span></div>
+                          <button className="title-action" type="button" onClick={() => setSelectedId(item.id)}><h3>{item.title}</h3></button>
+                          {item.type !== 'movie' && <p>Temporada {item.currentSeason ?? 1} · Episodio {item.currentEpisode ?? 0}{item.totalEpisodes ? ` de ${item.totalEpisodes}` : ''}</p>}
+                          {value != null && <><div className="progress-track"><span style={{ width: `${value}%` }} /></div><small>{value}% completado</small></>}
+                          <div className="continue-actions">
+                            <button className="secondary-action" type="button" onClick={() => setSelectedId(item.id)}>Editar ficha</button>
+                            {item.type !== 'movie' && item.totalEpisodes && <button className="primary-action" type="button" onClick={() => advanceEpisode(item.id)}>+1 episodio</button>}
+                          </div>
+                        </div>
+                      </article>
+                    )
+                  })}
+                </div>
+              )}
+            </section>
 
-        <DiscoverPanel
-          enabled={Boolean(session)}
-          existingKeys={existingCatalogKeys}
-          onAdd={addTmdbItem}
-        />
+            <section className="section-block">
+              <div className="section-heading">
+                <div><p className="eyebrow">Recientes</p><h2>Tu biblioteca</h2></div>
+                <button className="text-action" type="button" onClick={() => navigate('library')}>Abrir biblioteca →</button>
+              </div>
+              <MediaGrid items={items.slice(0, 4)} onOpen={(item) => setSelectedId(item.id)} emptyTitle="Tu biblioteca está vacía." emptyText="Ve a Descubrir y agrega tu primer título." />
+            </section>
+          </>
+        )}
 
-        <section className="section-block">
-          <div className="section-heading library-heading">
-            <div><p className="eyebrow">Todo en un lugar</p><h2>Mi biblioteca</h2></div>
-            <div className="filters">
-              {(['all', 'movie', 'series', 'anime'] as const).map((value) => (
-                <button key={value} className={filter === value ? 'filter active' : 'filter'} onClick={() => setFilter(value)}>
-                  {value === 'all' ? 'Todo' : typeLabels[value]}
-                </button>
-              ))}
+        {listPage && (
+          <section className="section-block page-list-block">
+            <div className="section-heading library-heading">
+              <div>
+                <p className="eyebrow">{visibleItems.length} {visibleItems.length === 1 ? 'título' : 'títulos'}</p>
+                <h2>{page === 'library' ? 'Todo lo que agregaste' : meta.title}</h2>
+              </div>
+              <div className="filters">
+                {(['all', 'movie', 'series', 'anime'] as const).map((value) => (
+                  <button key={value} className={filter === value ? 'filter active' : 'filter'} type="button" onClick={() => setFilter(value)}>
+                    {value === 'all' ? 'Todo' : typeLabels[value]}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+            <MediaGrid
+              items={visibleItems}
+              onOpen={(item) => setSelectedId(item.id)}
+              emptyTitle={query ? 'No encontramos coincidencias.' : `No hay títulos en ${meta.title.toLowerCase()}.`}
+              emptyText={query ? 'Prueba con otro nombre o cambia los filtros.' : page === 'wishlist' ? 'Agrega títulos desde Descubrir; entrarán aquí como Pendientes.' : 'Puedes cambiar el estado desde la ficha de cualquier título.'}
+            />
+          </section>
+        )}
 
-          {session && !libraryLoading && visibleItems.length === 0 ? (
-            <div className="empty-state compact">
-              <strong>Tu biblioteca está vacía.</strong>
-              <p>Usa el buscador de TMDB para agregar tu primera película o serie.</p>
+        {page === 'discover' && (
+          <DiscoverPanel enabled={Boolean(session)} existingKeys={existingCatalogKeys} onAdd={addTmdbItem} />
+        )}
+
+        {page === 'collections' && (
+          <section className="section-block collections-page">
+            <div className="collections-grid">
+              <article className="collection-card featured-collection">
+                <span>Colección sugerida</span><strong>Marvel · MCU</strong><p>Ideal para ordenar tu preparación antes de Doomsday.</p><button type="button" disabled>Próximamente</button>
+              </article>
+              <article className="collection-card">
+                <span>Personalizadas</span><strong>Crea tus propias listas</strong><p>Sagas, recomendaciones, pendientes de fin de semana y más.</p><button type="button" disabled>Próximo módulo</button>
+              </article>
             </div>
-          ) : (
-            <div className="library-grid">
-              {visibleItems.map((item) => (
-                <article className="media-card" key={item.id}>
-                  <div className="cover">
-                    <CoverImage item={item} />
-                    <em>{labels[item.status]}</em>
-                  </div>
-                  <div className="media-body">
-                    <div className="meta"><span>{typeLabels[item.type]}</span><span>{item.year}</span></div>
-                    <h3>{item.title}</h3>
-                    <div className="media-footer">
-                      <span>{item.collection ?? (session ? 'Supabase' : 'Biblioteca')}</span>
-                      {item.score ? <strong>★ {item.score}/10</strong> : <span>{labels[item.status]}</span>}
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
+          </section>
+        )}
       </main>
+
+      {selectedItem && session && (
+        <MediaEditor
+          item={selectedItem}
+          onClose={() => setSelectedId(null)}
+          onSave={saveSelected}
+          onDelete={deleteSelected}
+        />
+      )}
     </div>
   )
 }

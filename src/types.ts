@@ -8,9 +8,25 @@ export interface LibraryItem {
   status: WatchStatus
   year: number
   posterUrl?: string
+  currentSeason?: number
   currentEpisode?: number
+  totalSeasons?: number
   totalEpisodes?: number
   score?: number
+  favorite?: boolean
+  notes?: string
   collection?: string
   accent: string
+}
+
+export type LibraryItemPatch = {
+  type?: MediaType
+  status?: WatchStatus
+  currentSeason?: number | null
+  currentEpisode?: number | null
+  totalSeasons?: number | null
+  totalEpisodes?: number | null
+  score?: number | null
+  favorite?: boolean
+  notes?: string | null
 }
