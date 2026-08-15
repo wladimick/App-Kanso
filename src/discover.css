@@ -1,3 +1,4 @@
+.nav-link { display: block; text-decoration: none; }
 .discover-block { border-top: 1px solid #232329; padding-top: 34px; }
 .discover-heading { align-items: center; }
 .provider-badge { border: 1px solid #2c2c33; border-radius: 999px; padding: 7px 10px; color: #9a9aa4; font-size: 11px; }
