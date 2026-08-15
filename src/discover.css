@@ -1,0 +1,34 @@
+.discover-block { border-top: 1px solid #232329; padding-top: 34px; }
+.discover-heading { align-items: center; }
+.provider-badge { border: 1px solid #2c2c33; border-radius: 999px; padding: 7px 10px; color: #9a9aa4; font-size: 11px; }
+.discover-search { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+.discover-search input { border: 1px solid #2c2c33; background: #121216; color: #fff; border-radius: 14px; padding: 13px 14px; outline: 0; }
+.discover-search input:focus { border-color: #4a4a54; }
+.discover-search button { border: 0; border-radius: 12px; padding: 0 18px; background: #f4f4f5; color: #09090b; font-weight: 800; }
+.discover-search button:disabled { opacity: .45; cursor: not-allowed; }
+.discover-note, .discover-summary { color: #85858f; font-size: 12px; margin-top: 12px; }
+.discover-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 16px; }
+.discover-card { display: grid; grid-template-columns: 130px 1fr; min-height: 205px; overflow: hidden; border: 1px solid #26262d; border-radius: 18px; background: #111115; }
+.discover-poster { min-height: 205px; background: linear-gradient(145deg, #303039, #151519); display: grid; place-items: center; overflow: hidden; }
+.discover-poster img { width: 100%; height: 100%; object-fit: cover; }
+.discover-poster span { font-weight: 900; font-size: 28px; color: #d8d8dd; }
+.discover-content { padding: 16px; display: flex; flex-direction: column; min-width: 0; }
+.discover-content h3 { margin-bottom: 4px; }
+.discover-content small { color: #777782; font-size: 11px; }
+.discover-content p { margin: 10px 0 14px; color: #9a9aa4; font-size: 12px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.catalog-action { margin-top: auto; border: 1px solid #34343d; border-radius: 10px; padding: 9px 11px; background: #1a1a20; color: #f4f4f5; font-weight: 700; text-align: center; }
+.catalog-action:hover:not(:disabled) { background: #f4f4f5; color: #09090b; }
+.catalog-action.added { color: #8f8f99; background: #141418; }
+.catalog-action:disabled { cursor: default; }
+.tmdb-attribution { margin: 14px 0 0; color: #696973; font-size: 10px; line-height: 1.5; }
+
+@media (max-width: 960px) {
+  .discover-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 560px) {
+  .discover-search { grid-template-columns: 1fr; }
+  .discover-search button { min-height: 44px; }
+  .discover-card { grid-template-columns: 95px 1fr; }
+  .discover-poster { min-height: 170px; }
+}
