@@ -1,6 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Database } from '../lib/database.types'
-import { addLibraryItem, listLibrary, updateProgress, type LibraryItemInput } from '../services/library'
+import {
+  addLibraryItem,
+  deleteLibraryItem,
+  listLibrary,
+  updateLibraryItem,
+  updateProgress,
+  type LibraryItemInput,
+  type LibraryItemUpdateInput,
+} from '../services/library'
 
 type LibraryRow = Database['public']['Tables']['library_items']['Row']
 
@@ -53,6 +61,35 @@ export function useLibrary(userId?: string) {
     }
   }, [userId])
 
+  const editItem = useCallback(async (id: string, patch: LibraryItemUpdateInput) => {
+    if (!userId) return null
+
+    try {
+      const updated = await updateLibraryItem(userId, id, patch)
+      setRows((current) => current.map((row) => row.id === updated.id ? updated : row))
+      setError(null)
+      return updated
+    } catch (cause) {
+      console.error('No fue posible editar el título en Supabase.', cause)
+      setError(cause instanceof Error ? cause.message : 'No fue posible guardar los cambios.')
+      throw cause
+    }
+  }, [userId])
+
+  const removeItem = useCallback(async (id: string) => {
+    if (!userId) return
+
+    try {
+      await deleteLibraryItem(userId, id)
+      setRows((current) => current.filter((row) => row.id !== id))
+      setError(null)
+    } catch (cause) {
+      console.error('No fue posible eliminar el título de Supabase.', cause)
+      setError(cause instanceof Error ? cause.message : 'No fue posible eliminar el título.')
+      throw cause
+    }
+  }, [userId])
+
   const advanceEpisode = useCallback(async (row: LibraryRow) => {
     if (!userId || !row.total_episodes) return
 
@@ -80,6 +117,8 @@ export function useLibrary(userId?: string) {
     error,
     refresh,
     addItem,
+    editItem,
+    removeItem,
     advanceEpisode,
   }
 }
