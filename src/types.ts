@@ -19,15 +19,14 @@ export interface LibraryItem {
   accent: string
 }
 
-export type LibraryItemPatch = Partial<Pick<
-  LibraryItem,
-  | 'type'
-  | 'status'
-  | 'currentSeason'
-  | 'currentEpisode'
-  | 'totalSeasons'
-  | 'totalEpisodes'
-  | 'score'
-  | 'favorite'
-  | 'notes'
->>
+export type LibraryItemPatch = {
+  type?: MediaType
+  status?: WatchStatus
+  currentSeason?: number | null
+  currentEpisode?: number | null
+  totalSeasons?: number | null
+  totalEpisodes?: number | null
+  score?: number | null
+  favorite?: boolean
+  notes?: string | null
+}
