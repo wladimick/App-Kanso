@@ -43,6 +43,24 @@ function initials(title: string) {
     .join('') || 'K'
 }
 
+function CoverImage({ item }: { item: LibraryItem }) {
+  return (
+    <>
+      <span>{item.accent}</span>
+      {item.posterUrl && (
+        <img
+          src={item.posterUrl}
+          alt={`Poster de ${item.title}`}
+          loading="lazy"
+          onError={(event) => {
+            event.currentTarget.style.display = 'none'
+          }}
+        />
+      )}
+    </>
+  )
+}
+
 export default function App() {
   const { session, loading: authLoading } = useAuth()
   const {
@@ -65,6 +83,7 @@ export default function App() {
       type: row.media_type,
       status: row.status,
       year: row.release_year ?? new Date().getFullYear(),
+      posterUrl: row.poster_url ?? undefined,
       currentEpisode: row.current_episode ?? undefined,
       totalEpisodes: row.total_episodes ?? undefined,
       score: row.score ?? undefined,
@@ -200,7 +219,7 @@ export default function App() {
                 const value = progress(item)
                 return (
                   <article className="continue-card" key={item.id}>
-                    <div className="cover large"><span>{item.accent}</span></div>
+                    <div className="cover large"><CoverImage item={item} /></div>
                     <div className="continue-body">
                       <div className="meta"><span>{typeLabels[item.type]}</span><span>{item.year}</span></div>
                       <h3>{item.title}</h3>
@@ -247,7 +266,10 @@ export default function App() {
             <div className="library-grid">
               {visibleItems.map((item) => (
                 <article className="media-card" key={item.id}>
-                  <div className="cover"><span>{item.accent}</span><em>{labels[item.status]}</em></div>
+                  <div className="cover">
+                    <CoverImage item={item} />
+                    <em>{labels[item.status]}</em>
+                  </div>
                   <div className="media-body">
                     <div className="meta"><span>{typeLabels[item.type]}</span><span>{item.year}</span></div>
                     <h3>{item.title}</h3>
