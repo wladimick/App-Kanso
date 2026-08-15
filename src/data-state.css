@@ -1,0 +1,60 @@
+.data-mode {
+  margin: 10px 0 0;
+  color: #85858f;
+  font-size: 12px;
+}
+
+.data-mode.synced {
+  color: #d4d4d8;
+}
+
+.system-message {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 18px;
+  border: 1px solid #34343c;
+  border-radius: 14px;
+  padding: 14px 16px;
+  background: #141419;
+  color: #d7d7dc;
+}
+
+.system-message strong {
+  font-size: 13px;
+}
+
+.system-message span {
+  color: #9696a0;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.system-message.error {
+  border-color: #5a3338;
+  background: #1a1114;
+}
+
+.empty-state {
+  border: 1px dashed #313138;
+  border-radius: 18px;
+  padding: 24px;
+  background: rgba(18, 18, 22, .64);
+}
+
+.empty-state.compact {
+  padding: 20px;
+}
+
+.empty-state strong {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 14px;
+}
+
+.empty-state p {
+  max-width: 720px;
+  margin-bottom: 0;
+  color: #85858f;
+  font-size: 12px;
+  line-height: 1.6;
+}
