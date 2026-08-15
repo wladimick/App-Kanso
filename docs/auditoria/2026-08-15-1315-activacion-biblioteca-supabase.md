@@ -132,21 +132,25 @@ Se mantiene el modelo definido en la migración inicial:
 
 El frontend continúa enviando `user_id`, pero la autorización efectiva debe seguir siendo responsabilidad de RLS en la base de datos.
 
-## 6. Verificación pendiente al crear este registro
+## 6. Validación CI
 
-Al momento de crear este documento falta ejecutar CI sobre los cambios de este bloque.
+La versión de código que activó la biblioteca remota fue validada por GitHub Actions en el run de PR `#25` (`31897892465`).
 
-La validación esperada incluye:
+Resultado:
 
-1. `npm ci`;
-2. `npm run typecheck`;
-3. `npm run build`.
+- Setup Node.js 22: **SUCCESS**;
+- `npm ci`: **SUCCESS**;
+- `npm run typecheck`: **SUCCESS**;
+- `npm run build`: **SUCCESS**;
+- cleanup del workflow: **SUCCESS**.
 
-También permanece pendiente una verificación funcional contra el proyecto Supabase Kanso mediante una sesión real, porque la cuenta Supabase conectada a ChatGPT no tiene acceso a ese proyecto.
+No se detectaron errores TypeScript ni fallos de build en este bloque.
 
-## 7. Próximas validaciones funcionales
+## 7. Validación funcional pendiente
 
-Cuando Kanso tenga una URL ejecutable o se pruebe localmente con variables reales:
+Aunque el código compila y el esquema fue informado como aplicado, ChatGPT no puede verificar directamente la base del proyecto Kanso desde la conexión Supabase actual.
+
+Por tanto queda pendiente una prueba funcional con una sesión real contra la cuenta correcta:
 
 1. iniciar sesión mediante Magic Link;
 2. confirmar que una sesión autenticada obtiene biblioteca vacía sin errores;
@@ -165,6 +169,6 @@ Con la persistencia del dashboard preparada, la siguiente etapa técnica será i
 
 AniList se incorporará después para enriquecer anime y posteriormente manga.
 
-## 9. Estado del bloque al crear este registro
+## 9. Estado de cierre
 
-**Migración informada como aplicada manualmente por el usuario en el proyecto correcto. Frontend conectado a la biblioteca Supabase para sesiones autenticadas. CI y prueba funcional contra la cuenta real pendientes de cierre.**
+**Migración informada como aplicada manualmente por el usuario en el proyecto correcto. Frontend conectado a `library_items` para sesiones autenticadas. Modo demo separado de datos reales. TypeScript y build verificados exitosamente en CI. La validación funcional contra la cuenta Supabase real queda pendiente hasta ejecutar Kanso con autenticación sobre ese proyecto.**
