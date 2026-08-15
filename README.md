@@ -15,6 +15,7 @@ Kanso es una aplicación personal para organizar y seguir películas, series y a
 - React + Vite + TypeScript
 - Supabase para autenticación, progreso, listas, colecciones y funciones de servidor
 - TMDB para películas y series
+- Vercel para hosting del frontend
 - AniList para anime y manga en una etapa posterior
 
 ## Requisitos
@@ -111,6 +112,23 @@ Estado de validación:
 
 El API Key v3 de TMDB no es necesario en el flujo actual: se utiliza el API Read Access Token como Bearer token.
 
+## Vercel
+
+El usuario confirmó el 15 de agosto de 2026 la creación del proyecto `app-kanso` en una nueva cuenta Vercel (`wladimick1`).
+
+La conexión Vercel disponible actualmente en ChatGPT corresponde a otro equipo y no ve ese proyecto. Por seguridad no se creó otro proyecto ni se modificó una cuenta distinta.
+
+Variables requeridas en Vercel:
+
+```env
+VITE_SUPABASE_URL=https://gfqudpbtxhquwsrtahnm.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=<publishable key de Kanso>
+```
+
+No configurar `TMDB_READ_ACCESS_TOKEN` en Vercel: ese secreto permanece únicamente en Supabase Edge Functions.
+
+Una vez obtenida la URL pública de Vercel, debe agregarse a Supabase Auth como Redirect URL para probar Magic Link desde el deployment real.
+
 ## Autenticación
 
 Kanso incorpora acceso passwordless mediante Magic Link de Supabase.
@@ -156,6 +174,7 @@ Registros actuales:
 - `docs/auditoria/2026-08-15-1350-cierre-tmdb-ci.md`
 - `docs/auditoria/2026-08-15-1354-secreto-tmdb-configurado.md`
 - `docs/auditoria/2026-08-15-1408-deploy-tmdb-search.md`
+- `docs/auditoria/2026-08-15-1722-vercel-proyecto-creado.md`
 
 ## Estado actual
 
@@ -171,9 +190,13 @@ Registros actuales:
 - ✅ credenciales TMDB fuera de variables `VITE_*`
 - ✅ secreto `TMDB_READ_ACCESS_TOKEN` informado como creado en Supabase Kanso
 - ✅ `tmdb-search` informada como desplegada manualmente
+- ✅ proyecto Vercel `app-kanso` informado como creado por el usuario
 - ✅ `package-lock.json` versionado
 - ✅ CI con typecheck y build
-- ⏳ prueba funcional de Magic Link contra el proyecto real
+- ⏳ conectar/configurar el deployment Vercel `app-kanso`
+- ⏳ agregar variables públicas de Supabase en Vercel
+- ⏳ obtener URL pública y autorizarla en Supabase Auth
+- ⏳ prueba funcional de Magic Link contra el deployment real
 - ⏳ prueba end-to-end de búsqueda TMDB y alta en `library_items`
 - ⏳ logo TMDB aprobado en créditos antes de publicación pública
 - ⏳ AniList
