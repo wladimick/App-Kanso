@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
 import { AuthPanel } from './components/AuthPanel'
+import { useAuth } from './hooks/useAuth'
+import { useLibrary } from './hooks/useLibrary'
 import type { LibraryItem, MediaType, WatchStatus } from './types'
 
-const initialItems: LibraryItem[] = [
+const demoItems: LibraryItem[] = [
   { id: 'hxh', title: 'Hunter × Hunter', type: 'anime', status: 'watching', year: 2011, currentEpisode: 137, totalEpisodes: 148, score: 10, accent: 'HXH' },
   { id: 'black-rabbit', title: 'Black Rabbit', type: 'series', status: 'watching', year: 2025, currentEpisode: 1, totalEpisodes: 8, accent: 'BR' },
   { id: 'ahs', title: 'American Horror Story', type: 'series', status: 'paused', year: 2011, currentEpisode: 63, accent: 'AHS' },
@@ -30,10 +32,39 @@ function progress(item: LibraryItem) {
   return Math.min(100, Math.round((item.currentEpisode / item.totalEpisodes) * 100))
 }
 
+function initials(title: string) {
+  return title
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 3)
+    .map((part) => part[0]?.toUpperCase())
+    .join('') || 'K'
+}
+
 export default function App() {
-  const [items, setItems] = useState(initialItems)
+  const { session, loading: authLoading } = useAuth()
+  const { rows, loading: libraryLoading, error: libraryError, advanceEpisode: advanceRemoteEpisode } = useLibrary(session?.user.id)
+  const [localItems, setLocalItems] = useState(demoItems)
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<'all' | MediaType>('all')
+
+  const remoteItems = useMemo<LibraryItem[]>(() => rows.flatMap((row) => {
+    if (row.media_type === 'manga') return []
+
+    return [{
+      id: row.id,
+      title: row.title,
+      type: row.media_type,
+      status: row.status,
+      year: row.release_year ?? new Date().getFullYear(),
+      currentEpisode: row.current_episode ?? undefined,
+      totalEpisodes: row.total_episodes ?? undefined,
+      score: row.score ?? undefined,
+      accent: initials(row.title),
+    }]
+  }), [rows])
+
+  const items = session ? remoteItems : localItems
 
   const visibleItems = useMemo(() => {
     const normalized = query.trim().toLowerCase()
@@ -49,7 +80,13 @@ export default function App() {
   const planned = items.filter((item) => item.status === 'planned').length
 
   const advanceEpisode = (id: string) => {
-    setItems((current) => current.map((item) => {
+    if (session) {
+      const row = rows.find((item) => item.id === id)
+      if (row) void advanceRemoteEpisode(row)
+      return
+    }
+
+    setLocalItems((current) => current.map((item) => {
       if (item.id !== id || !item.totalEpisodes) return item
       const next = Math.min((item.currentEpisode ?? 0) + 1, item.totalEpisodes)
       return {
@@ -59,6 +96,14 @@ export default function App() {
       }
     }))
   }
+
+  const dataMode = authLoading
+    ? 'Comprobando sesión…'
+    : session
+      ? libraryLoading
+        ? 'Sincronizando con Supabase…'
+        : 'Biblioteca sincronizada con Supabase'
+      : 'Modo demostración · inicia sesión para usar tus datos reales'
 
   return (
     <div className="app-shell">
@@ -90,6 +135,7 @@ export default function App() {
           <div>
             <p className="eyebrow">Biblioteca personal</p>
             <h1>¿Qué quieres continuar?</h1>
+            <p className={session ? 'data-mode synced' : 'data-mode'}>{dataMode}</p>
           </div>
           <div className="topbar-actions">
             <AuthPanel />
@@ -99,6 +145,13 @@ export default function App() {
             </label>
           </div>
         </header>
+
+        {libraryError && session && (
+          <div className="system-message error" role="alert">
+            <strong>No pudimos sincronizar tu biblioteca.</strong>
+            <span>{libraryError}</span>
+          </div>
+        )}
 
         <section className="stats-grid" aria-label="Resumen">
           <article className="stat-card"><span>Viendo ahora</span><strong>{watching.length}</strong><small>títulos activos</small></article>
@@ -111,28 +164,35 @@ export default function App() {
           <div className="section-heading">
             <div><p className="eyebrow">Continuar</p><h2>Viendo ahora</h2></div>
           </div>
-          <div className="continue-grid">
-            {watching.map((item) => {
-              const value = progress(item)
-              return (
-                <article className="continue-card" key={item.id}>
-                  <div className="cover large"><span>{item.accent}</span></div>
-                  <div className="continue-body">
-                    <div className="meta"><span>{typeLabels[item.type]}</span><span>{item.year}</span></div>
-                    <h3>{item.title}</h3>
-                    {item.currentEpisode && item.totalEpisodes && (
-                      <>
-                        <p>Episodio {item.currentEpisode} de {item.totalEpisodes}</p>
-                        <div className="progress-track"><span style={{ width: `${value}%` }} /></div>
-                        <small>{value}% completado</small>
-                        <button className="primary-action" onClick={() => advanceEpisode(item.id)}>Marcar siguiente episodio +1</button>
-                      </>
-                    )}
-                  </div>
-                </article>
-              )
-            })}
-          </div>
+          {session && !libraryLoading && watching.length === 0 ? (
+            <div className="empty-state">
+              <strong>Aún no tienes títulos en progreso.</strong>
+              <p>Tu sesión ya usa la biblioteca real de Supabase. Cuando agreguemos TMDB podrás buscar títulos y comenzar a seguirlos desde aquí.</p>
+            </div>
+          ) : (
+            <div className="continue-grid">
+              {watching.map((item) => {
+                const value = progress(item)
+                return (
+                  <article className="continue-card" key={item.id}>
+                    <div className="cover large"><span>{item.accent}</span></div>
+                    <div className="continue-body">
+                      <div className="meta"><span>{typeLabels[item.type]}</span><span>{item.year}</span></div>
+                      <h3>{item.title}</h3>
+                      {item.currentEpisode && item.totalEpisodes && (
+                        <>
+                          <p>Episodio {item.currentEpisode} de {item.totalEpisodes}</p>
+                          <div className="progress-track"><span style={{ width: `${value}%` }} /></div>
+                          <small>{value}% completado</small>
+                          <button className="primary-action" onClick={() => advanceEpisode(item.id)}>Marcar siguiente episodio +1</button>
+                        </>
+                      )}
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+          )}
         </section>
 
         <section className="section-block">
@@ -147,21 +207,28 @@ export default function App() {
             </div>
           </div>
 
-          <div className="library-grid">
-            {visibleItems.map((item) => (
-              <article className="media-card" key={item.id}>
-                <div className="cover"><span>{item.accent}</span><em>{labels[item.status]}</em></div>
-                <div className="media-body">
-                  <div className="meta"><span>{typeLabels[item.type]}</span><span>{item.year}</span></div>
-                  <h3>{item.title}</h3>
-                  <div className="media-footer">
-                    <span>{item.collection ?? 'Biblioteca'}</span>
-                    {item.score ? <strong>★ {item.score}/10</strong> : <span>{labels[item.status]}</span>}
+          {session && !libraryLoading && visibleItems.length === 0 ? (
+            <div className="empty-state compact">
+              <strong>Tu biblioteca está vacía.</strong>
+              <p>La conexión está lista para leer tus datos reales. El siguiente bloque será agregar títulos desde TMDB y AniList.</p>
+            </div>
+          ) : (
+            <div className="library-grid">
+              {visibleItems.map((item) => (
+                <article className="media-card" key={item.id}>
+                  <div className="cover"><span>{item.accent}</span><em>{labels[item.status]}</em></div>
+                  <div className="media-body">
+                    <div className="meta"><span>{typeLabels[item.type]}</span><span>{item.year}</span></div>
+                    <h3>{item.title}</h3>
+                    <div className="media-footer">
+                      <span>{item.collection ?? (session ? 'Supabase' : 'Biblioteca')}</span>
+                      {item.score ? <strong>★ {item.score}/10</strong> : <span>{labels[item.status]}</span>}
+                    </div>
                   </div>
-                </div>
-              </article>
-            ))}
-          </div>
+                </article>
+              ))}
+            </div>
+          )}
         </section>
       </main>
     </div>
