@@ -20,50 +20,25 @@ Zona horaria de referencia: `America/Santiago`.
 6. Cambios externos realizados en GitHub, Supabase, Vercel u otros servicios.
 7. Decisiones técnicas y de seguridad.
 8. Validaciones ejecutadas y resultado.
-9. Errores/incidencias, causa y corrección.
-10. Limitaciones o acciones que no pudieron ejecutarse.
-11. Pendientes y siguiente paso recomendado.
-12. Rama, PR, commits y runs relevantes cuando corresponda.
-13. Estado final del bloque.
+9. Limitaciones o acciones que no pudieron ejecutarse.
+10. Pendientes y siguiente paso recomendado.
+11. Rama, PR y commits relevantes cuando corresponda.
 
-## Acciones realizadas fuera de ChatGPT
+## Credenciales y secretos
 
-Cuando el usuario ejecute manualmente una acción en un servicio externo —por ejemplo Supabase, Vercel, DNS, GitHub o una consola de proveedor— el registro debe distinguir explícitamente entre:
-
-- **acción informada por el usuario**;
-- **acción ejecutada directamente por ChatGPT/herramienta**;
-- **acción verificada técnicamente por ChatGPT**;
-- **acción no verificable desde las conexiones disponibles**.
-
-Una acción manual no se marca como "verificada" solo porque el usuario confirmó haberla realizado. Se registra su confirmación y, si corresponde, se deja una validación técnica posterior como pendiente.
-
-## Historial
-
-Los registros anteriores no deben reescribirse para simular que un estado posterior ya existía. Cuando cambie una condición relevante, crear un nuevo registro que haga referencia al anterior. Esto conserva la secuencia real del proyecto.
-
-## CI y errores
-
-Los fallos de CI forman parte de la auditoría y no deben ocultarse. Registrar cuando sea aplicable:
-
-- run o job;
-- paso que falló;
-- mensaje de error relevante;
-- corrección aplicada;
-- validación posterior.
-
-## Seguridad
-
-No copiar a `docs/`:
-
-- service role keys;
-- secret keys;
-- contraseñas;
-- tokens privados;
-- cookies/sesiones;
-- información sensible innecesaria.
-
-Las publishable keys pueden ser públicas por diseño, pero la documentación debe favorecer nombres de variables y evitar duplicar credenciales sin necesidad.
+- Nunca copiar valores reales de tokens, API keys privadas, `service_role`, `sb_secret_...` u otros secretos a `docs/`.
+- Registrar solamente el nombre lógico de la variable y si fue entregada/configurada/verificada.
+- Las credenciales entregadas por el usuario pueden utilizarse para orientar la configuración, pero no deben incorporarse a GitHub salvo que sean explícitamente públicas por diseño.
+- Variables `VITE_*` se consideran visibles al navegador y no deben contener secretos.
 
 ## Criterio
 
 La auditoría debe describir lo que efectivamente se hizo. Una acción pendiente no se registra como completada. Si una herramienta o integración no permitió validar un cambio, se deja indicado explícitamente.
+
+Los estados deben diferenciar claramente entre:
+
+- ejecutado por ChatGPT;
+- ejecutado manualmente por el usuario;
+- validado directamente;
+- informado pero no verificable desde la conexión disponible;
+- pendiente.
