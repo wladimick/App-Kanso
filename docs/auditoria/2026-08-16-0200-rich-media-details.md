@@ -92,10 +92,27 @@ Las pruebas se suman a la suite existente de UI móvil y aislamiento de datos.
 
 No se modifica el esquema SQL ni RLS. No se requiere migración para esta etapa.
 
+## Validaciones ejecutadas
+
+PR #9 creado como Draft.
+
+GitHub Actions run #125:
+
+- `npm ci`: success;
+- suite de regresión completa: success;
+- TypeScript: success;
+- build Vite: success.
+
+Vercel generó Preview en estado `Ready`:
+
+`https://app-kanso-git-feat-rich-media-details-wladimick1.vercel.app`
+
 ## Pendiente operacional
 
 La Edge Function `tmdb-details` debe desplegarse en el mismo proyecto Supabase que usa Kanso para habilitar temporadas, episodios y relacionados en producción. El proyecto Kanso no está conectado a la integración Supabase disponible en esta sesión, por lo que ese despliegue no puede ejecutarse automáticamente desde aquí.
 
+El Preview puede probarse hoy con fallback: cards TMDB, backdrop, descripción y rating básico siguen funcionando mediante `tmdb-search`.
+
 ## Estado
 
-Implementación en rama completada. Pendiente CI, TypeScript, build, Vercel Preview y QA funcional antes de merge.
+**Frontend + Edge Function versionados y controles automáticos en verde. Pendiente desplegar `tmdb-details` en Supabase y realizar QA funcional antes de merge.**
