@@ -44,7 +44,7 @@ Optimizar Kanso en teléfono luego del QA visual real del usuario:
 
 ## QA automatizado agregado
 
-Se crea una suite cero-dependencias con `node:test`:
+Se crea una suite cero-dependencias con `node:test`.
 
 ### `tests/mobile-ui.test.mjs`
 
@@ -67,6 +67,8 @@ Comprueba contratos críticos existentes de Supabase:
 4. RLS habilitado en las cuatro tablas personales;
 5. policy SELECT de `library_items` ligada a `auth.uid()`.
 
+Total agregado: **11 pruebas de regresión**.
+
 ## CI
 
 `package.json` incorpora `npm test` sin agregar dependencias externas.
@@ -77,6 +79,19 @@ GitHub Actions ahora ejecuta:
 2. `npm test`;
 3. `npm run typecheck`;
 4. `npm run build`.
+
+## Validación ejecutada
+
+PR #8:
+
+- `npm ci`: OK;
+- regression tests: OK;
+- 11/11 pruebas: OK;
+- TypeScript: OK;
+- build Vite: OK;
+- GitHub Actions run #121: success;
+- Vercel Preview: Ready;
+- Preview: `app-kanso-git-feat-mobile-density-qa-wladimick1.vercel.app`.
 
 ## Backend
 
@@ -91,4 +106,4 @@ No se modifica:
 
 ## Estado
 
-Implementación terminada en rama. Pendiente validar PR, suite automatizada, TypeScript, build, Vercel Preview y posteriormente hacer squash merge a `main` solo si todos los controles quedan verdes.
+**QA automático y deployment de Preview aprobados. Rama apta para squash merge a `main`.**
