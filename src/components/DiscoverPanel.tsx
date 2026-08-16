@@ -1,6 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTmdbSearch } from '../hooks/useTmdbSearch'
 import type { TmdbSearchResult } from '../services/tmdb'
+
+type QuickStatus = 'completed' | 'planned'
 
 export type DiscoverPanelProps = {
   enabled: boolean
@@ -15,11 +17,30 @@ function catalogKey(item: Pick<TmdbSearchResult, 'externalId'>) {
 export function DiscoverPanel({ enabled, existingKeys, onAdd }: DiscoverPanelProps) {
   const [query, setQuery] = useState('')
   const [addingKey, setAddingKey] = useState<string | null>(null)
+  const [quickAddingKey, setQuickAddingKey] = useState<string | null>(null)
   const [addError, setAddError] = useState<string | null>(null)
   const { results, loading, error, lastQuery, search } = useTmdbSearch(enabled)
 
   const hasResults = results.length > 0
   const resultCount = useMemo(() => results.length, [results])
+
+  useEffect(() => {
+    const complete = (event: Event) => {
+      const detail = (event as CustomEvent<{ externalId?: string }>).detail
+      if (detail?.externalId) setQuickAddingKey(null)
+    }
+    const fail = (event: Event) => {
+      const detail = (event as CustomEvent<{ message?: string }>).detail
+      setQuickAddingKey(null)
+      setAddError(detail?.message ?? 'No fue posible guardar el título.')
+    }
+    window.addEventListener('kanso:quick-add-complete', complete)
+    window.addEventListener('kanso:quick-add-error', fail)
+    return () => {
+      window.removeEventListener('kanso:quick-add-complete', complete)
+      window.removeEventListener('kanso:quick-add-error', fail)
+    }
+  }, [])
 
   const submit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -38,6 +59,15 @@ export function DiscoverPanel({ enabled, existingKeys, onAdd }: DiscoverPanelPro
     } finally {
       setAddingKey(null)
     }
+  }
+
+  const quickAdd = (item: TmdbSearchResult, status: QuickStatus) => {
+    const key = `${catalogKey(item)}:${status}`
+    setQuickAddingKey(key)
+    setAddError(null)
+    window.dispatchEvent(new CustomEvent('kanso:quick-add', {
+      detail: { item, status },
+    }))
   }
 
   return (
@@ -90,6 +120,8 @@ export function DiscoverPanel({ enabled, existingKeys, onAdd }: DiscoverPanelPro
               const key = catalogKey(item)
               const alreadyAdded = existingKeys.has(key)
               const isAdding = addingKey === key
+              const markingSeen = quickAddingKey === `${key}:completed`
+              const markingPlanned = quickAddingKey === `${key}:planned`
 
               return (
                 <article className="discover-card" key={`${key}:${item.mediaType}`}>
@@ -109,14 +141,40 @@ export function DiscoverPanel({ enabled, existingKeys, onAdd }: DiscoverPanelPro
                     <h3>{item.title}</h3>
                     {item.originalTitle !== item.title && <small>{item.originalTitle}</small>}
                     <p>{item.overview || 'Sin sinopsis disponible en TMDB.'}</p>
-                    <button
-                      type="button"
-                      className={alreadyAdded ? 'catalog-action added' : 'catalog-action'}
-                      onClick={() => void add(item)}
-                      disabled={alreadyAdded || isAdding}
-                    >
-                      {alreadyAdded ? 'Ya está en Kanso' : isAdding ? 'Agregando…' : '+ Agregar a Kanso'}
-                    </button>
+                    {alreadyAdded ? (
+                      <button type="button" className="catalog-action added" disabled>Ya está en Kanso</button>
+                    ) : (
+                      <div className="catalog-actions">
+                        <button
+                          type="button"
+                          className="catalog-action catalog-action-main"
+                          onClick={() => void add(item)}
+                          disabled={isAdding || Boolean(quickAddingKey)}
+                        >
+                          {isAdding ? 'Agregando…' : '+ Agregar a Kanso'}
+                        </button>
+                        <button
+                          type="button"
+                          className="catalog-quick-action"
+                          onClick={() => quickAdd(item, 'completed')}
+                          disabled={isAdding || Boolean(quickAddingKey)}
+                          aria-label={`Marcar ${item.title} como visto`}
+                          title="Marcar como visto"
+                        >
+                          {markingSeen ? '…' : '✓'}
+                        </button>
+                        <button
+                          type="button"
+                          className="catalog-quick-action"
+                          onClick={() => quickAdd(item, 'planned')}
+                          disabled={isAdding || Boolean(quickAddingKey)}
+                          aria-label={`Agregar ${item.title} a lista de deseos`}
+                          title="Lista de deseos"
+                        >
+                          {markingPlanned ? '…' : '♡'}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </article>
               )
