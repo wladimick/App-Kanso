@@ -14,7 +14,7 @@ test('mobile tab bar exposes five primary actions', () => {
   assert.match(tabbar, /Inicio/)
   assert.match(tabbar, /Biblioteca/)
   assert.match(tabbar, /Agregar/)
-  assert.match(tabbar, /Marvel/)
+  assert.match(tabbar, /Estrenos/)
   assert.match(tabbar, /Buscar/)
   assert.match(css, /grid-template-columns: repeat\(5/)
 })
