@@ -3,11 +3,17 @@ export type WatchStatus = 'planned' | 'watching' | 'completed' | 'paused' | 'dro
 
 export interface LibraryItem {
   id: string
+  source?: 'tmdb' | 'anilist' | 'manual'
+  externalId?: string
   title: string
   type: MediaType
   status: WatchStatus
   year: number
   posterUrl?: string
+  backdropUrl?: string
+  overview?: string
+  tmdbRating?: number
+  tmdbVoteCount?: number
   currentSeason?: number
   currentEpisode?: number
   totalSeasons?: number

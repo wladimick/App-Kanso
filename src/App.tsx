@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AuthPanel } from './components/AuthPanel'
 import { DiscoverPanel } from './components/DiscoverPanel'
+import { MediaDetail } from './components/MediaDetail'
 import { MediaEditor } from './components/MediaEditor'
+import { TmdbRating } from './components/TmdbRating'
 import { useAuth } from './hooks/useAuth'
 import { useLibrary } from './hooks/useLibrary'
 import type { TmdbSearchResult } from './services/tmdb'
@@ -103,6 +105,7 @@ function MediaGrid({ items, onOpen, emptyTitle, emptyText }: {
             {item.favorite && <b className="favorite-badge">★</b>}
           </div>
           <div className="media-body">
+            <TmdbRating item={item} compact />
             <div className="meta"><span>{typeLabels[item.type]}</span><span>{item.year}</span></div>
             <h3>{item.title}</h3>
             {(item.currentEpisode != null || item.score != null) && (
@@ -113,7 +116,7 @@ function MediaGrid({ items, onOpen, emptyTitle, emptyText }: {
             )}
             <div className="media-footer">
               <span>{item.collection ?? labels[item.status]}</span>
-              <span>Editar →</span>
+              <span>Ver ficha →</span>
             </div>
           </div>
         </button>
@@ -139,6 +142,7 @@ export default function App() {
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<'all' | MediaType>('all')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [editorId, setEditorId] = useState<string | null>(null)
 
   useEffect(() => {
     const syncPage = () => setPage(pageFromUrl())
@@ -154,6 +158,8 @@ export default function App() {
     setPage(next)
     setQuery('')
     setFilter('all')
+    setSelectedId(null)
+    setEditorId(null)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -162,6 +168,8 @@ export default function App() {
 
     return [{
       id: row.id,
+      source: row.source,
+      externalId: row.external_id,
       title: row.title,
       type: row.media_type,
       status: row.status,
@@ -180,6 +188,7 @@ export default function App() {
 
   const items = session ? remoteItems : localItems
   const selectedItem = selectedId ? items.find((item) => item.id === selectedId) ?? null : null
+  const editorItem = editorId ? items.find((item) => item.id === editorId) ?? null : null
 
   const watching = items.filter((item) => item.status === 'watching')
   const completed = items.filter((item) => item.status === 'completed')
@@ -222,9 +231,9 @@ export default function App() {
     })
   }
 
-  const saveSelected = async (patch: LibraryItemPatch) => {
-    if (!session || !selectedItem) return
-    await editItem(selectedItem.id, {
+  const saveEditorItem = async (patch: LibraryItemPatch) => {
+    if (!session || !editorItem) return
+    await editItem(editorItem.id, {
       mediaType: patch.type,
       status: patch.status,
       currentSeason: patch.currentSeason,
@@ -237,9 +246,10 @@ export default function App() {
     })
   }
 
-  const deleteSelected = async () => {
-    if (!session || !selectedItem) return
-    await removeItem(selectedItem.id)
+  const deleteEditorItem = async () => {
+    if (!session || !editorItem) return
+    await removeItem(editorItem.id)
+    setEditorId(null)
     setSelectedId(null)
   }
 
@@ -284,10 +294,7 @@ export default function App() {
       <aside className="sidebar">
         <button type="button" className="brand brand-button" onClick={() => navigate('home')}>
           <span className="brand-mark">K</span>
-          <span>
-            <strong>Kanso</strong>
-            <small>Tu universo, ordenado.</small>
-          </span>
+          <span><strong>Kanso</strong><small>Tu universo, ordenado.</small></span>
         </button>
 
         <nav className="nav-list" aria-label="Navegación principal">
@@ -296,8 +303,7 @@ export default function App() {
               {index === 1 && <span className="nav-section-label">Tu biblioteca</span>}
               {index === 6 && <span className="nav-section-label">Explorar</span>}
               <button className={page === item.page ? 'nav-item active' : 'nav-item'} type="button" onClick={() => navigate(item.page)}>
-                <span>{item.label}</span>
-                {item.count != null && <b>{item.count}</b>}
+                <span>{item.label}</span>{item.count != null && <b>{item.count}</b>}
               </button>
             </div>
           ))}
@@ -320,21 +326,11 @@ export default function App() {
           </div>
           <div className="topbar-actions">
             <AuthPanel />
-            {listPage && (
-              <label className="search-box">
-                <span>⌕</span>
-                <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar en esta lista…" />
-              </label>
-            )}
+            {listPage && <label className="search-box"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar en esta lista…" /></label>}
           </div>
         </header>
 
-        {libraryError && session && (
-          <div className="system-message error" role="alert">
-            <strong>No pudimos sincronizar tu biblioteca.</strong>
-            <span>{libraryError}</span>
-          </div>
-        )}
+        {libraryError && session && <div className="system-message error" role="alert"><strong>No pudimos sincronizar tu biblioteca.</strong><span>{libraryError}</span></div>}
 
         {page === 'home' && (
           <>
@@ -346,10 +342,7 @@ export default function App() {
             </section>
 
             <section className="section-block">
-              <div className="section-heading">
-                <div><p className="eyebrow">Continuar</p><h2>Viendo ahora</h2></div>
-                <button className="text-action" type="button" onClick={() => navigate('watching')}>Ver todos →</button>
-              </div>
+              <div className="section-heading"><div><p className="eyebrow">Continuar</p><h2>Viendo ahora</h2></div><button className="text-action" type="button" onClick={() => navigate('watching')}>Ver todos →</button></div>
               {watching.length === 0 ? (
                 <div className="empty-state"><strong>Aún no tienes títulos en progreso.</strong><p>Abre un título de tu biblioteca y cambia su estado a “Viendo”.</p></div>
               ) : (
@@ -360,12 +353,13 @@ export default function App() {
                       <article className="continue-card" key={item.id}>
                         <button className="cover large cover-button" type="button" onClick={() => setSelectedId(item.id)}><CoverImage item={item} /></button>
                         <div className="continue-body">
+                          <TmdbRating item={item} />
                           <div className="meta"><span>{typeLabels[item.type]}</span><span>{item.year}</span></div>
                           <button className="title-action" type="button" onClick={() => setSelectedId(item.id)}><h3>{item.title}</h3></button>
                           {item.type !== 'movie' && <p>Temporada {item.currentSeason ?? 1} · Episodio {item.currentEpisode ?? 0}{item.totalEpisodes ? ` de ${item.totalEpisodes}` : ''}</p>}
                           {value != null && <><div className="progress-track"><span style={{ width: `${value}%` }} /></div><small>{value}% completado</small></>}
                           <div className="continue-actions">
-                            <button className="secondary-action" type="button" onClick={() => setSelectedId(item.id)}>Editar ficha</button>
+                            <button className="secondary-action" type="button" onClick={() => setSelectedId(item.id)}>Ver ficha</button>
                             {item.type !== 'movie' && item.totalEpisodes && <button className="primary-action" type="button" onClick={() => advanceEpisode(item.id)}>+1 episodio</button>}
                           </div>
                         </div>
@@ -377,11 +371,8 @@ export default function App() {
             </section>
 
             <section className="section-block">
-              <div className="section-heading">
-                <div><p className="eyebrow">Recientes</p><h2>Tu biblioteca</h2></div>
-                <button className="text-action" type="button" onClick={() => navigate('library')}>Abrir biblioteca →</button>
-              </div>
-              <MediaGrid items={items.slice(0, 4)} onOpen={(item) => setSelectedId(item.id)} emptyTitle="Tu biblioteca está vacía." emptyText="Ve a Descubrir y agrega tu primer título." />
+              <div className="section-heading"><div><p className="eyebrow">Recientes</p><h2>Tu biblioteca</h2></div><button className="text-action" type="button" onClick={() => navigate('library')}>Abrir biblioteca →</button></div>
+              <MediaGrid items={items.slice(0, 6)} onOpen={(item) => setSelectedId(item.id)} emptyTitle="Tu biblioteca está vacía." emptyText="Ve a Descubrir y agrega tu primer título." />
             </section>
           </>
         )}
@@ -389,51 +380,44 @@ export default function App() {
         {listPage && (
           <section className="section-block page-list-block">
             <div className="section-heading library-heading">
-              <div>
-                <p className="eyebrow">{visibleItems.length} {visibleItems.length === 1 ? 'título' : 'títulos'}</p>
-                <h2>{page === 'library' ? 'Todo lo que agregaste' : meta.title}</h2>
-              </div>
+              <div><p className="eyebrow">{visibleItems.length} {visibleItems.length === 1 ? 'título' : 'títulos'}</p><h2>{page === 'library' ? 'Todo lo que agregaste' : meta.title}</h2></div>
               <div className="filters">
                 {(['all', 'movie', 'series', 'anime'] as const).map((value) => (
-                  <button key={value} className={filter === value ? 'filter active' : 'filter'} type="button" onClick={() => setFilter(value)}>
-                    {value === 'all' ? 'Todo' : typeLabels[value]}
-                  </button>
+                  <button key={value} className={filter === value ? 'filter active' : 'filter'} type="button" onClick={() => setFilter(value)}>{value === 'all' ? 'Todo' : typeLabels[value]}</button>
                 ))}
               </div>
             </div>
-            <MediaGrid
-              items={visibleItems}
-              onOpen={(item) => setSelectedId(item.id)}
-              emptyTitle={query ? 'No encontramos coincidencias.' : `No hay títulos en ${meta.title.toLowerCase()}.`}
-              emptyText={query ? 'Prueba con otro nombre o cambia los filtros.' : page === 'wishlist' ? 'Agrega títulos desde Descubrir; entrarán aquí como Pendientes.' : 'Puedes cambiar el estado desde la ficha de cualquier título.'}
-            />
+            <MediaGrid items={visibleItems} onOpen={(item) => setSelectedId(item.id)} emptyTitle={query ? 'No encontramos coincidencias.' : `No hay títulos en ${meta.title.toLowerCase()}.`} emptyText={query ? 'Prueba con otro nombre o cambia los filtros.' : page === 'wishlist' ? 'Agrega títulos desde Descubrir; entrarán aquí como Pendientes.' : 'Puedes cambiar el estado desde la ficha de cualquier título.'} />
           </section>
         )}
 
-        {page === 'discover' && (
-          <DiscoverPanel enabled={Boolean(session)} existingKeys={existingCatalogKeys} onAdd={addTmdbItem} />
-        )}
+        {page === 'discover' && <DiscoverPanel enabled={Boolean(session)} existingKeys={existingCatalogKeys} onAdd={addTmdbItem} />}
 
         {page === 'collections' && (
           <section className="section-block collections-page">
             <div className="collections-grid">
-              <article className="collection-card featured-collection">
-                <span>Colección sugerida</span><strong>Marvel · MCU</strong><p>Ideal para ordenar tu preparación antes de Doomsday.</p><button type="button" disabled>Próximamente</button>
-              </article>
-              <article className="collection-card">
-                <span>Personalizadas</span><strong>Crea tus propias listas</strong><p>Sagas, recomendaciones, pendientes de fin de semana y más.</p><button type="button" disabled>Próximo módulo</button>
-              </article>
+              <article className="collection-card featured-collection"><span>Colección sugerida</span><strong>Marvel · MCU</strong><p>Ideal para ordenar tu preparación antes de Doomsday.</p><button type="button" disabled>Próximamente</button></article>
+              <article className="collection-card"><span>Personalizadas</span><strong>Crea tus propias listas</strong><p>Sagas, recomendaciones, pendientes de fin de semana y más.</p><button type="button" disabled>Próximo módulo</button></article>
             </div>
           </section>
         )}
       </main>
 
       {selectedItem && session && (
-        <MediaEditor
+        <MediaDetail
           item={selectedItem}
           onClose={() => setSelectedId(null)}
-          onSave={saveSelected}
-          onDelete={deleteSelected}
+          onEdit={() => setEditorId(selectedItem.id)}
+          onAdvance={selectedItem.type !== 'movie' ? () => advanceEpisode(selectedItem.id) : undefined}
+        />
+      )}
+
+      {editorItem && session && (
+        <MediaEditor
+          item={editorItem}
+          onClose={() => setEditorId(null)}
+          onSave={saveEditorItem}
+          onDelete={deleteEditorItem}
         />
       )}
     </div>
