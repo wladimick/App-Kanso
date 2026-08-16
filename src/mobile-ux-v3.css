@@ -3,9 +3,12 @@
 body.releases-view-active .app-shell > .content,
 body.releases-view-active .marvel-hub { display: none !important; }
 
+/* ReleasesRoute is mounted outside .app-shell. On desktop/tablet the persistent
+   sidebar still owns the left column, so the route must explicitly reserve it. */
 .releases-page {
-  width: min(1320px, 100%);
-  margin: 0 auto;
+  width: auto;
+  max-width: 1320px;
+  margin: 0 auto 0 var(--sidebar-w, 232px);
   padding: 36px 42px 90px;
 }
 .releases-hero { max-width: 760px; margin-bottom: 26px; }
@@ -80,7 +83,7 @@ body.releases-view-active .marvel-hub { display: none !important; }
 @media (max-width: 1050px) { .release-grid { grid-template-columns: repeat(3, minmax(0,1fr)); } }
 
 @media (max-width: 760px) {
-  .releases-page { width: 100%; padding: calc(72px + env(safe-area-inset-top)) 14px calc(104px + env(safe-area-inset-bottom)); }
+  .releases-page { width: 100%; max-width: none; margin-left: 0; padding: calc(72px + env(safe-area-inset-top)) 14px calc(104px + env(safe-area-inset-bottom)); }
   .releases-hero { margin-bottom: 18px; }
   .releases-hero h1 { font-size: 38px; }
   .releases-hero p { font-size: 13px; }
