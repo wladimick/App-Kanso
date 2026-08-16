@@ -87,7 +87,7 @@ export function MediaEditor({ item, onClose, onSave, onDelete }: Props) {
         favorite,
         notes: notes.trim() || null,
       })
-      setMessage('Cambios guardados en Kanso.')
+      onClose()
     } catch {
       setMessage('No fue posible guardar los cambios.')
     } finally {
