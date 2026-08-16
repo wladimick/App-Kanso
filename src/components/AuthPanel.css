@@ -58,9 +58,13 @@
 }
 
 .auth-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
   min-height: 100dvh;
   display: grid;
   place-items: center;
+  overflow-y: auto;
   padding: 28px;
   background:
     radial-gradient(circle at 15% 12%, rgba(255,255,255,.09), transparent 24%),
@@ -69,8 +73,12 @@
 }
 
 .auth-screen-embedded {
+  position: static;
+  inset: auto;
+  z-index: auto;
   min-height: 0;
   padding: 0;
+  overflow: visible;
   background: transparent;
 }
 
