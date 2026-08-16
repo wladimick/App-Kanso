@@ -55,6 +55,21 @@ export function MediaEditor({ item, onClose, onSave, onDelete }: Props) {
     setMessage(null)
   }, [item])
 
+  const selectQuickStatus = (nextStatus: WatchStatus) => {
+    setStatus(nextStatus)
+    setMessage(null)
+
+    if (type !== 'movie' && nextStatus === 'watching') {
+      if (!season) setSeason('1')
+      if (!episode) setEpisode('1')
+    }
+
+    if (type !== 'movie' && nextStatus === 'completed') {
+      if (totalSeasons) setSeason(totalSeasons)
+      if (totalEpisodes) setEpisode(totalEpisodes)
+    }
+  }
+
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setSaving(true)
@@ -110,6 +125,44 @@ export function MediaEditor({ item, onClose, onSave, onDelete }: Props) {
         </div>
 
         <form className="editor-form" onSubmit={submit}>
+          <section className="editor-quick-status" aria-labelledby={`quick-status-${item.id}`}>
+            <div className="editor-quick-heading">
+              <div>
+                <span className="editor-kicker">Seguimiento rápido</span>
+                <h3 id={`quick-status-${item.id}`}>¿Cómo vas con este título?</h3>
+              </div>
+              <small>Elige una opción y luego guarda.</small>
+            </div>
+            <div className={type === 'movie' ? 'editor-quick-grid movie' : 'editor-quick-grid'}>
+              <button
+                type="button"
+                className={status === 'planned' ? 'quick-status-card active' : 'quick-status-card'}
+                onClick={() => selectQuickStatus('planned')}
+              >
+                <strong>Lo veré después</strong>
+                <span>Queda en tu lista de deseos.</span>
+              </button>
+              {type !== 'movie' && (
+                <button
+                  type="button"
+                  className={status === 'watching' ? 'quick-status-card active' : 'quick-status-card'}
+                  onClick={() => selectQuickStatus('watching')}
+                >
+                  <strong>Estoy viendo</strong>
+                  <span>Indica abajo temporada y episodio.</span>
+                </button>
+              )}
+              <button
+                type="button"
+                className={status === 'completed' ? 'quick-status-card active' : 'quick-status-card'}
+                onClick={() => selectQuickStatus('completed')}
+              >
+                <strong>Ya lo vi completo</strong>
+                <span>Se moverá a Completados.</span>
+              </button>
+            </div>
+          </section>
+
           <div className="editor-grid">
             <label>
               <span>Estado</span>

@@ -43,6 +43,12 @@ export function useLibrary(userId?: string) {
     void refresh()
   }, [refresh])
 
+  useEffect(() => {
+    const handleRefresh = () => void refresh()
+    window.addEventListener('kanso:library-refresh', handleRefresh)
+    return () => window.removeEventListener('kanso:library-refresh', handleRefresh)
+  }, [refresh])
+
   const addItem = useCallback(async (item: LibraryItemInput) => {
     if (!userId) return null
 
@@ -53,6 +59,7 @@ export function useLibrary(userId?: string) {
         return [added, ...withoutExisting]
       })
       setError(null)
+      window.dispatchEvent(new CustomEvent('kanso:item-added', { detail: { row: added } }))
       return added
     } catch (cause) {
       console.error('No fue posible agregar el título a Supabase.', cause)
