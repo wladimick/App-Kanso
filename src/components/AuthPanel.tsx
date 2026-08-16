@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react'
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js'
 import { isSupabaseConfigured, supabase } from '../lib/supabase'
+import { useAuth } from '../hooks/useAuth'
 import './AuthPanel.css'
 
 type AuthMode = 'login' | 'signup' | 'forgot' | 'recovery'
 type Feedback = { kind: 'error' | 'success' | 'info'; text: string } | null
 
 type AuthPanelProps = {
-  session: Session | null
-  loading: boolean
+  session?: Session | null
+  loading?: boolean
   authEvent?: AuthChangeEvent | null
   full?: boolean
 }
@@ -23,7 +24,11 @@ function friendlyAuthError(message: string) {
   return message
 }
 
-export function AuthPanel({ session, loading, authEvent = null, full = false }: AuthPanelProps) {
+export function AuthPanel(props: AuthPanelProps = {}) {
+  const auth = useAuth()
+  const session = props.session === undefined ? auth.session : props.session
+  const loading = props.loading === undefined ? auth.loading : props.loading
+  const authEvent = props.authEvent === undefined ? auth.authEvent : props.authEvent
   const [mode, setMode] = useState<AuthMode>('login')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -33,6 +38,7 @@ export function AuthPanel({ session, loading, authEvent = null, full = false }: 
   const [feedback, setFeedback] = useState<Feedback>(null)
   const [submitting, setSubmitting] = useState(false)
   const client = supabase
+  const full = props.full ?? (!session || mode === 'recovery')
 
   useEffect(() => {
     if (authEvent === 'PASSWORD_RECOVERY') {
