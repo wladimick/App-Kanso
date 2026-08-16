@@ -13,6 +13,7 @@ import './app-shell-enhancements.css'
 import './mobile-polish.css'
 import './rich-media.css'
 import './marvel.css'
+import './compact-editor.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
