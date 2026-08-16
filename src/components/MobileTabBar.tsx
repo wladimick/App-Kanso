@@ -4,15 +4,15 @@ const items = [
   { view: 'home', label: 'Inicio', icon: '⌂' },
   { view: 'library', label: 'Biblioteca', icon: '▦' },
   { view: 'discover', label: 'Agregar', icon: '+' },
-  { view: 'marvel', label: 'Marvel', icon: '✦' },
+  { view: 'releases', label: 'Estrenos', icon: '◷' },
   { view: 'discover', label: 'Buscar', icon: '⌕' },
 ] as const
 
-type ViewKey = 'home' | 'library' | 'marvel' | 'discover'
+type ViewKey = 'home' | 'library' | 'releases' | 'discover'
 
 function getView(): ViewKey {
   const value = new URLSearchParams(window.location.search).get('view')
-  if (value === 'library' || value === 'marvel' || value === 'discover') return value
+  if (value === 'library' || value === 'releases' || value === 'discover') return value
   return 'home'
 }
 
