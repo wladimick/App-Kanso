@@ -3,10 +3,12 @@ import { withSupabase } from "jsr:@supabase/server@^1";
 import { corsHeaders } from "jsr:@supabase/supabase-js@2.111.0/cors";
 
 type Filter = "all" | "movie" | "series";
-type Payload = { filter?: Filter };
+type Mode = "upcoming" | "trending";
+type Payload = { filter?: Filter; mode?: Mode; page?: number };
 
 type TmdbItem = {
   id: number;
+  media_type?: "movie" | "tv" | "person";
   title?: string;
   name?: string;
   original_title?: string;
@@ -30,7 +32,11 @@ type TmdbTvDetails = TmdbItem & {
   } | null;
 };
 
-type Page = { results?: TmdbItem[] };
+type Page = {
+  page?: number;
+  total_pages?: number;
+  results?: TmdbItem[];
+};
 
 const BASE = "https://api.themoviedb.org/3";
 const POSTER = "https://image.tmdb.org/t/p/w500";
@@ -41,7 +47,7 @@ function json(data: unknown, status = 200) {
     status,
     headers: {
       ...corsHeaders,
-      "Cache-Control": "private, max-age=1800",
+      "Cache-Control": "private, max-age=900",
     },
   });
 }
@@ -112,6 +118,76 @@ function mapSeries(item: TmdbTvDetails) {
   };
 }
 
+async function upcoming(filter: Filter, page: number, token: string) {
+  const today = new Date();
+  const until = new Date(today);
+  until.setDate(until.getDate() + 90);
+  const from = dateString(today);
+  const to = dateString(until);
+
+  const movieJob = filter === "series"
+    ? Promise.resolve({ items: [], hasMore: false })
+    : tmdb<Page>(
+        `/discover/movie?language=es-CL&region=CL&sort_by=popularity.desc&release_date.gte=${from}&release_date.lte=${to}&with_release_type=2|3|4|6&include_adult=false&include_video=false&page=${page}`,
+        token,
+      ).then((result) => ({
+        items: (result.results ?? []).map(mapMovie),
+        hasMore: page < (result.total_pages ?? page),
+      }));
+
+  const seriesJob = filter === "movie"
+    ? Promise.resolve({ items: [], hasMore: false })
+    : tmdb<Page>(
+        `/discover/tv?language=es-CL&sort_by=popularity.desc&air_date.gte=${from}&air_date.lte=${to}&include_adult=false&page=${page}`,
+        token,
+      ).then(async (result) => {
+        const details = await Promise.allSettled(
+          (result.results ?? []).map((item) =>
+            tmdb<TmdbTvDetails>(`/tv/${item.id}?language=es-CL`, token)
+          ),
+        );
+
+        const items = details
+          .filter((entry): entry is PromiseFulfilledResult<TmdbTvDetails> => entry.status === "fulfilled")
+          .map((entry) => mapSeries(entry.value))
+          .filter((item) => item.releaseDate && item.releaseDate >= from && item.releaseDate <= to);
+
+        return {
+          items,
+          hasMore: page < (result.total_pages ?? page),
+        };
+      });
+
+  const [movies, series] = await Promise.all([movieJob, seriesJob]);
+  return {
+    results: [...movies.items, ...series.items]
+      .sort((a, b) =>
+        String(a.releaseDate).localeCompare(String(b.releaseDate)) ||
+        b.popularity - a.popularity
+      ),
+    hasMore: movies.hasMore || series.hasMore,
+    window: { from, to },
+  };
+}
+
+async function trending(filter: Filter, page: number, token: string) {
+  const media = filter === "movie" ? "movie" : filter === "series" ? "tv" : "all";
+  const result = await tmdb<Page>(`/trending/${media}/day?language=es-CL&page=${page}`, token);
+
+  const results = (result.results ?? [])
+    .filter((item) => item.media_type !== "person")
+    .flatMap((item) => {
+      if (filter === "movie" || item.media_type === "movie" || item.title) return [mapMovie(item)];
+      if (filter === "series" || item.media_type === "tv" || item.name) return [mapSeries(item)];
+      return [];
+    });
+
+  return {
+    results,
+    hasMore: page < (result.total_pages ?? page),
+  };
+}
+
 const handler = withSupabase({ auth: "user" }, async (request) => {
   if (request.method !== "POST") {
     return json({ error: "Método no permitido." }, 405);
@@ -125,69 +201,34 @@ const handler = withSupabase({ auth: "user" }, async (request) => {
   try {
     const payload = (await request.json()) as Payload;
     const filter: Filter = payload.filter ?? "all";
+    const mode: Mode = payload.mode ?? "upcoming";
+    const page = Number.isInteger(payload.page) ? Math.min(Math.max(payload.page ?? 1, 1), 50) : 1;
 
     if (!["all", "movie", "series"].includes(filter)) {
       return json({ error: "Filtro inválido." }, 400);
     }
+    if (!["upcoming", "trending"].includes(mode)) {
+      return json({ error: "Modo inválido." }, 400);
+    }
 
-    const today = new Date();
-    const until = new Date(today);
-    until.setDate(until.getDate() + 90);
-
-    const from = dateString(today);
-    const to = dateString(until);
-
-    const moviePromise = filter === "series"
-      ? Promise.resolve([])
-      : tmdb<Page>(
-          `/discover/movie?language=es-CL&region=CL&sort_by=popularity.desc&release_date.gte=${from}&release_date.lte=${to}&with_release_type=2|3|4|6&include_adult=false&include_video=false&page=1`,
-          token,
-        ).then((page) => (page.results ?? []).map(mapMovie));
-
-    const seriesPromise = filter === "movie"
-      ? Promise.resolve([])
-      : tmdb<Page>(
-          `/discover/tv?language=es-CL&sort_by=popularity.desc&air_date.gte=${from}&air_date.lte=${to}&include_adult=false&page=1`,
-          token,
-        ).then(async (page) => {
-          const candidates = (page.results ?? []).slice(0, 20);
-          const details = await Promise.allSettled(
-            candidates.map((item) =>
-              tmdb<TmdbTvDetails>(`/tv/${item.id}?language=es-CL`, token),
-            ),
-          );
-
-          return details
-            .filter((result): result is PromiseFulfilledResult<TmdbTvDetails> => result.status === "fulfilled")
-            .map((result) => mapSeries(result.value))
-            .filter((item) => item.releaseDate && item.releaseDate >= from && item.releaseDate <= to);
-        });
-
-    const [movies, series] = await Promise.all([moviePromise, seriesPromise]);
-
-    const results = [...movies, ...series]
-      .filter((item) => item.releaseDate)
-      .sort(
-        (a, b) =>
-          String(a.releaseDate).localeCompare(String(b.releaseDate)) ||
-          b.popularity - a.popularity,
-      )
-      .slice(0, 40);
+    const response = mode === "trending"
+      ? await trending(filter, page, token)
+      : await upcoming(filter, page, token);
 
     return json({
-      results,
+      results: response.results,
       generatedAt: new Date().toISOString(),
-      window: { from, to },
-      counts: { movies: movies.length, series: series.length },
+      page,
+      hasMore: response.hasMore,
+      mode,
+      filter,
+      ...(mode === "upcoming" && "window" in response ? { window: response.window } : {}),
     });
   } catch (error) {
     console.error("tmdb-releases error", error);
     return json(
       {
-        error:
-          error instanceof Error
-            ? error.message
-            : "No fue posible consultar estrenos.",
+        error: error instanceof Error ? error.message : "No fue posible consultar actualidad.",
       },
       502,
     );
