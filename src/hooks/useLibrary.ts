@@ -97,6 +97,24 @@ export function useLibrary(userId?: string) {
     }
   }, [userId])
 
+  const setEpisode = useCallback(async (row: LibraryRow, season: number, episode: number) => {
+    if (!userId) return null
+    try {
+      const updated = await updateProgress(userId, row.id, {
+        season,
+        episode,
+        status: 'watching',
+      })
+      setRows((current) => current.map((item) => item.id === updated.id ? updated : item))
+      setError(null)
+      return updated
+    } catch (cause) {
+      console.error('No fue posible actualizar el episodio actual.', cause)
+      setError(cause instanceof Error ? cause.message : 'No fue posible actualizar el episodio.')
+      throw cause
+    }
+  }, [userId])
+
   const advanceEpisode = useCallback(async (row: LibraryRow) => {
     if (!userId || !row.total_episodes) return
 
@@ -126,6 +144,7 @@ export function useLibrary(userId?: string) {
     addItem,
     editItem,
     removeItem,
+    setEpisode,
     advanceEpisode,
   }
 }

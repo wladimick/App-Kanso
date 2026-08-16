@@ -19,10 +19,11 @@ const demoItems: LibraryItem[] = [
 ]
 
 type AppPage = 'home' | 'library' | 'wishlist' | 'watching' | 'completed' | 'favorites' | 'collections' | 'discover'
+type LibraryStatusFilter = 'all' | 'watching' | 'planned' | 'completed' | 'favorites'
 
 const pageMeta: Record<AppPage, { eyebrow: string; title: string; description: string }> = {
   home: { eyebrow: 'Biblioteca personal', title: '¿Qué quieres continuar?', description: 'Tu centro de control para todo lo que ves.' },
-  library: { eyebrow: 'Tu catálogo', title: 'Mi biblioteca', description: 'Solo los títulos que agregaste a Kanso.' },
+  library: { eyebrow: 'Tu catálogo', title: 'Mi biblioteca', description: 'Todo tu universo en una sola vista.' },
   wishlist: { eyebrow: 'Para después', title: 'Lista de deseos', description: 'Películas, series y anime que quieres ver.' },
   watching: { eyebrow: 'En progreso', title: 'Viendo ahora', description: 'Continúa exactamente donde quedaste.' },
   completed: { eyebrow: 'Historial', title: 'Completados', description: 'Todo lo que ya terminaste o viste.' },
@@ -43,6 +44,14 @@ const typeLabels: Record<MediaType, string> = {
   movie: 'Película',
   series: 'Serie',
   anime: 'Anime',
+}
+
+const libraryStatusLabels: Record<LibraryStatusFilter, string> = {
+  all: 'Todo',
+  watching: 'Viendo',
+  planned: 'Pendientes',
+  completed: 'Vistos',
+  favorites: 'Favoritos',
 }
 
 function initials(title: string) {
@@ -134,6 +143,7 @@ export default function App() {
     addItem,
     editItem,
     removeItem,
+    setEpisode: setRemoteEpisode,
     advanceEpisode: advanceRemoteEpisode,
   } = useLibrary(session?.user.id)
 
@@ -141,6 +151,7 @@ export default function App() {
   const [page, setPage] = useState<AppPage>(() => pageFromUrl())
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<'all' | MediaType>('all')
+  const [libraryStatusFilter, setLibraryStatusFilter] = useState<LibraryStatusFilter>('all')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editorId, setEditorId] = useState<string | null>(null)
 
@@ -158,6 +169,7 @@ export default function App() {
     setPage(next)
     setQuery('')
     setFilter('all')
+    setLibraryStatusFilter('all')
     setSelectedId(null)
     setEditorId(null)
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -210,9 +222,12 @@ export default function App() {
     return pageItems.filter((item) => {
       const matchesType = filter === 'all' || item.type === filter
       const matchesSearch = !normalized || item.title.toLowerCase().includes(normalized)
-      return matchesType && matchesSearch
+      const matchesLibraryStatus = page !== 'library'
+        || libraryStatusFilter === 'all'
+        || (libraryStatusFilter === 'favorites' ? item.favorite : item.status === libraryStatusFilter)
+      return matchesType && matchesSearch && matchesLibraryStatus
     })
-  }, [pageItems, query, filter])
+  }, [pageItems, query, filter, libraryStatusFilter, page])
 
   const existingCatalogKeys = useMemo(() => new Set(
     rows.map((row) => `${row.source}:${row.external_id}`),
@@ -251,6 +266,12 @@ export default function App() {
     await removeItem(editorItem.id)
     setEditorId(null)
     setSelectedId(null)
+  }
+
+  const setEpisode = async (id: string, season: number, episode: number) => {
+    if (!session) return
+    const row = rows.find((item) => item.id === id)
+    if (row) await setRemoteEpisode(row, season, episode)
   }
 
   const advanceEpisode = (id: string) => {
@@ -381,9 +402,16 @@ export default function App() {
           <section className="section-block page-list-block">
             <div className="section-heading library-heading">
               <div><p className="eyebrow">{visibleItems.length} {visibleItems.length === 1 ? 'título' : 'títulos'}</p><h2>{page === 'library' ? 'Todo lo que agregaste' : meta.title}</h2></div>
-              <div className="filters">
+              {page === 'library' && (
+                <div className="library-status-filters" aria-label="Filtrar biblioteca por estado">
+                  {(Object.keys(libraryStatusLabels) as LibraryStatusFilter[]).map((value) => (
+                    <button key={value} className={libraryStatusFilter === value ? 'status-filter active' : 'status-filter'} type="button" onClick={() => setLibraryStatusFilter(value)}>{libraryStatusLabels[value]}</button>
+                  ))}
+                </div>
+              )}
+              <div className="filters" aria-label="Filtrar por tipo">
                 {(['all', 'movie', 'series', 'anime'] as const).map((value) => (
-                  <button key={value} className={filter === value ? 'filter active' : 'filter'} type="button" onClick={() => setFilter(value)}>{value === 'all' ? 'Todo' : typeLabels[value]}</button>
+                  <button key={value} className={filter === value ? 'filter active' : 'filter'} type="button" onClick={() => setFilter(value)}>{value === 'all' ? 'Todos los tipos' : typeLabels[value]}</button>
                 ))}
               </div>
             </div>
@@ -409,6 +437,7 @@ export default function App() {
           onClose={() => setSelectedId(null)}
           onEdit={() => setEditorId(selectedItem.id)}
           onAdvance={selectedItem.type !== 'movie' ? () => advanceEpisode(selectedItem.id) : undefined}
+          onSetEpisode={selectedItem.type !== 'movie' ? (season, episode) => setEpisode(selectedItem.id, season, episode) : undefined}
         />
       )}
 

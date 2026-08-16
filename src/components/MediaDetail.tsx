@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useAuth } from '../hooks/useAuth'
+import { useEpisodeProgress } from '../hooks/useEpisodeProgress'
 import {
   getTmdbDetails,
   getTmdbSeasonEpisodes,
@@ -14,6 +16,7 @@ type Props = {
   onClose: () => void
   onEdit: () => void
   onAdvance?: () => void
+  onSetEpisode?: (season: number, episode: number) => Promise<void> | void
 }
 
 const statusLabels = {
@@ -66,7 +69,9 @@ function BasicDetail({ item, metadata }: { item: LibraryItem; metadata: TmdbSear
   )
 }
 
-export function MediaDetail({ item, onClose, onEdit, onAdvance }: Props) {
+export function MediaDetail({ item, onClose, onEdit, onAdvance, onSetEpisode }: Props) {
+  const { session } = useAuth()
+  const { watched, loading: progressLoading, toggle } = useEpisodeProgress(session?.user.id, item.id)
   const [details, setDetails] = useState<TmdbMediaDetails | null>(null)
   const [fallback, setFallback] = useState<TmdbSearchResult | null>(null)
   const [loading, setLoading] = useState(true)
@@ -105,6 +110,15 @@ export function MediaDetail({ item, onClose, onEdit, onAdvance }: Props) {
     return () => { active = false }
   }, [item.externalId, item.id, item.source, item.title, item.type])
 
+  useEffect(() => {
+    if (!details?.seasons?.length || item.type === 'movie') return
+    const preferred = item.currentSeason && details.seasons.some((season) => season.seasonNumber === item.currentSeason)
+      ? item.currentSeason
+      : details.seasons[0]?.seasonNumber
+    if (preferred != null && selectedSeason == null) void selectSeason(preferred)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [details?.seasons, item.currentSeason, item.type])
+
   const progressText = useMemo(() => {
     if (item.type === 'movie') return item.status === 'completed' ? 'Película completada' : statusLabels[item.status]
     if (item.status === 'completed') return 'Serie completada'
@@ -124,6 +138,11 @@ export function MediaDetail({ item, onClose, onEdit, onAdvance }: Props) {
     } finally {
       setEpisodesLoading(false)
     }
+  }
+
+  const toggleEpisode = async (season: number, episode: number) => {
+    const nowWatched = await toggle(season, episode)
+    if (nowWatched && onSetEpisode) await onSetEpisode(season, episode)
   }
 
   const backdrop = details?.backdropUrl ?? fallback?.backdropUrl ?? item.backdropUrl
@@ -170,7 +189,7 @@ export function MediaDetail({ item, onClose, onEdit, onAdvance }: Props) {
         <section className="detail-actions-bar">
           <button type="button" className={item.status === 'planned' ? 'detail-action active' : 'detail-action'} onClick={onEdit}><span>♡</span><strong>{item.status === 'planned' ? 'En mi lista' : 'Seguimiento'}</strong></button>
           <button type="button" className={item.status === 'completed' ? 'detail-action active' : 'detail-action'} onClick={onEdit}><span>✓</span><strong>{item.status === 'completed' ? 'Visto todo' : 'Marcar visto'}</strong></button>
-          <button type="button" className={item.favorite ? 'detail-action active' : 'detail-action'} onClick={onEdit}><span>★</span><strong>{item.favorite ? 'Favorito' : 'Favorito'}</strong></button>
+          <button type="button" className={item.favorite ? 'detail-action active' : 'detail-action'} onClick={onEdit}><span>★</span><strong>Favorito</strong></button>
           <button type="button" className="detail-action" onClick={onEdit}><span>✎</span><strong>Editar</strong></button>
         </section>
 
@@ -198,15 +217,27 @@ export function MediaDetail({ item, onClose, onEdit, onAdvance }: Props) {
             </div>
             {selectedSeason != null && (
               <div className="episode-panel">
-                <div className="episode-panel-title"><strong>Temporada {selectedSeason}</strong><span>{episodesLoading ? 'Cargando episodios…' : `${episodes.length} episodios`}</span></div>
+                <div className="episode-panel-title"><strong>Temporada {selectedSeason}</strong><span>{episodesLoading ? 'Cargando episodios…' : `${episodes.length} episodios · toca ✓ para marcar`}</span></div>
                 {!episodesLoading && episodes.length > 0 && (
                   <div className="episode-list">
-                    {episodes.map((episode) => (
-                      <article key={episode.episodeNumber} className={(item.currentSeason ?? 1) === selectedSeason && item.currentEpisode === episode.episodeNumber ? 'episode-row current' : 'episode-row'}>
-                        <div className="episode-still">{episode.stillUrl ? <img src={episode.stillUrl} alt="" /> : <span>E{episode.episodeNumber}</span>}</div>
-                        <div><span>Episodio {episode.episodeNumber}</span><strong>{episode.name}</strong>{episode.overview && <p>{episode.overview}</p>}</div>
-                      </article>
-                    ))}
+                    {episodes.map((episode) => {
+                      const key = `${selectedSeason}:${episode.episodeNumber}`
+                      const isWatched = watched.has(key)
+                      const isCurrent = (item.currentSeason ?? 1) === selectedSeason && item.currentEpisode === episode.episodeNumber
+                      return (
+                        <article key={episode.episodeNumber} className={`${isCurrent ? 'episode-row current' : 'episode-row'}${isWatched ? ' watched' : ''}`}>
+                          <div className="episode-still">{episode.stillUrl ? <img src={episode.stillUrl} alt="" /> : <span>E{episode.episodeNumber}</span>}</div>
+                          <div className="episode-copy"><span>Episodio {episode.episodeNumber}</span><strong>{episode.name}</strong>{episode.overview && <p>{episode.overview}</p>}</div>
+                          <button
+                            type="button"
+                            className={isWatched ? 'episode-check active' : 'episode-check'}
+                            aria-label={isWatched ? `Desmarcar episodio ${episode.episodeNumber}` : `Marcar episodio ${episode.episodeNumber} como visto`}
+                            disabled={progressLoading}
+                            onClick={() => void toggleEpisode(selectedSeason, episode.episodeNumber)}
+                          >✓</button>
+                        </article>
+                      )
+                    })}
                   </div>
                 )}
               </div>
