@@ -1,0 +1,319 @@
+/* Kanso · Mobile shell + seguimiento rápido */
+
+.mobile-menu-trigger,
+.mobile-menu-overlay {
+  display: none;
+}
+
+.editor-quick-status {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid #2b2b33;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #17171d, #111115);
+}
+
+.editor-quick-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 16px;
+}
+
+.editor-quick-heading h3 {
+  margin: 5px 0 0;
+  font-size: 20px;
+  letter-spacing: -.025em;
+}
+
+.editor-quick-heading small {
+  color: #80808a;
+  font-size: 11px;
+}
+
+.editor-quick-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.editor-quick-grid.movie {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.quick-status-card {
+  min-height: 92px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 6px;
+  padding: 13px;
+  border: 1px solid #303038;
+  border-radius: 13px;
+  background: #141419;
+  color: #d2d2d8;
+  text-align: left;
+}
+
+.quick-status-card strong {
+  color: #f4f4f5;
+  font-size: 13px;
+}
+
+.quick-status-card span {
+  color: #81818b;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.quick-status-card:hover,
+.quick-status-card.active {
+  border-color: #f4f4f5;
+  background: #f4f4f5;
+}
+
+.quick-status-card:hover strong,
+.quick-status-card.active strong,
+.quick-status-card:hover span,
+.quick-status-card.active span {
+  color: #101014;
+}
+
+@media (max-width: 760px) {
+  body.mobile-menu-open {
+    overflow: hidden;
+  }
+
+  .content {
+    padding-top: 72px;
+  }
+
+  .mobile-menu-trigger {
+    position: fixed;
+    z-index: 1180;
+    top: calc(15px + env(safe-area-inset-top));
+    right: 16px;
+    width: 46px;
+    height: 46px;
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    gap: 5px;
+    padding: 0;
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 14px;
+    background: rgba(22,22,27,.92);
+    box-shadow: 0 12px 30px rgba(0,0,0,.3);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+
+  .mobile-menu-trigger span {
+    width: 20px;
+    height: 2px;
+    border-radius: 999px;
+    background: #f4f4f5;
+  }
+
+  .mobile-menu-overlay {
+    position: fixed;
+    z-index: 1200;
+    inset: 0;
+    display: flex;
+    justify-content: flex-end;
+    background: rgba(0,0,0,.65);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .mobile-menu-drawer {
+    width: min(348px, 92vw);
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    padding: calc(16px + env(safe-area-inset-top)) 14px calc(18px + env(safe-area-inset-bottom));
+    border-left: 1px solid #2b2b32;
+    background: #0f0f13;
+    box-shadow: -24px 0 70px rgba(0,0,0,.5);
+  }
+
+  .mobile-menu-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 4px 2px 18px;
+  }
+
+  .mobile-menu-brand {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+  }
+
+  .mobile-menu-mark {
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    background: #f4f4f5;
+    color: #0a0a0d;
+    font-weight: 900;
+  }
+
+  .mobile-menu-brand strong,
+  .mobile-menu-brand small {
+    display: block;
+  }
+
+  .mobile-menu-brand strong {
+    font-size: 17px;
+  }
+
+  .mobile-menu-brand small {
+    margin-top: 2px;
+    color: #81818b;
+    font-size: 10px;
+  }
+
+  .mobile-menu-close {
+    width: 44px;
+    height: 44px;
+    border: 1px solid #303038;
+    border-radius: 50%;
+    background: #17171c;
+    color: #d7d7dc;
+    font-size: 25px;
+    line-height: 1;
+  }
+
+  .mobile-menu-nav {
+    display: grid;
+    gap: 7px;
+    padding: 8px 0 18px;
+  }
+
+  .mobile-menu-item {
+    min-height: 52px;
+    display: grid;
+    grid-template-columns: 34px 1fr auto;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 12px 8px 9px;
+    border: 1px solid transparent;
+    border-radius: 13px;
+    background: transparent;
+    color: #a3a3ac;
+    text-align: left;
+  }
+
+  .mobile-menu-item.active {
+    border-color: #32323a;
+    background: #1a1a20;
+    color: #fff;
+  }
+
+  .mobile-menu-item b {
+    color: #62626d;
+    font-size: 20px;
+    font-weight: 400;
+  }
+
+  .mobile-menu-icon {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    background: #19191e;
+    color: #d9d9de;
+    font-size: 14px;
+  }
+
+  .mobile-menu-item.active .mobile-menu-icon {
+    background: #f4f4f5;
+    color: #0c0c10;
+  }
+
+  .mobile-menu-account {
+    margin-top: auto;
+    padding: 15px;
+    border: 1px solid #292930;
+    border-radius: 14px;
+    background: #141418;
+  }
+
+  .mobile-menu-account span,
+  .mobile-menu-account strong {
+    display: block;
+  }
+
+  .mobile-menu-account span {
+    color: #777782;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+  }
+
+  .mobile-menu-account strong {
+    margin-top: 6px;
+    overflow: hidden;
+    color: #ededf0;
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .editor-quick-status {
+    gap: 12px;
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .editor-quick-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .editor-quick-heading h3 {
+    font-size: 18px;
+  }
+
+  .editor-quick-grid,
+  .editor-quick-grid.movie {
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }
+
+  .quick-status-card {
+    min-height: 72px;
+    padding: 11px 12px;
+  }
+
+  .quick-status-card strong {
+    font-size: 13px;
+  }
+
+  .quick-status-card span {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 390px) {
+  .content {
+    padding-top: 70px;
+  }
+
+  .mobile-menu-trigger {
+    top: calc(12px + env(safe-area-inset-top));
+    right: 12px;
+    width: 44px;
+    height: 44px;
+  }
+}
