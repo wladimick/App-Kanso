@@ -4,6 +4,7 @@
 **Zona horaria:** America/Santiago  
 **Repositorio:** `wladimick/App-Kanso`  
 **Rama:** `fix/mobile-nav-discover`  
+**PR:** #6 · `Fix mobile navigation and expose Discover`  
 **Responsable de registro:** ChatGPT · GPT-5.6 Sol
 
 ## 1. Objetivo
@@ -79,14 +80,23 @@ No se modificó:
 
 La tabla `library_items` está vacía según evidencia manual del usuario, por lo que no existe actualmente contenido que la vista de listas personales pueda mostrar.
 
-## 6. Validación esperada
+## 6. Validación automática
 
-Luego del deployment de Preview, en iPhone la barra inferior debe mostrar directamente los cinco destinos principales, incluyendo `Descubrir`.
+PR #6 / head `a4419e3841bc9bddd21d66e110d01388f5e09c47`:
 
-Flujo QA recomendado:
+- Kanso CI run #109 / `31926407545`: **success**;
+- instalación de dependencias: **success**;
+- TypeScript: **success**;
+- build Vite: **success**;
+- Vercel Preview: **Ready**;
+- Preview: `https://app-kanso-git-fix-mobile-nav-discover-wladimick1.vercel.app`.
 
-1. abrir Preview en iPhone;
-2. confirmar que `Descubrir` aparece en la barra inferior;
+## 7. QA real pendiente
+
+En iPhone:
+
+1. abrir Preview;
+2. confirmar que `Descubrir` aparece directamente en la barra inferior;
 3. entrar a `Descubrir`;
 4. buscar `Naruto` en TMDB;
 5. pulsar `+ Agregar a Kanso`;
@@ -95,6 +105,6 @@ Flujo QA recomendado:
 8. refrescar la página y confirmar persistencia;
 9. revisar `public.library_items` en Supabase y confirmar una fila con el `user_id` actual.
 
-## 7. Estado
+## 8. Estado
 
-**Diagnóstico confirmado y fix implementado en rama. Pendiente CI, Vercel Preview y QA real desde iPhone antes de merge.**
+**Diagnóstico confirmado. Fix implementado. TypeScript, build y Vercel Preview aprobados. Pendiente QA real desde iPhone antes de merge.**
