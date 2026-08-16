@@ -4,6 +4,7 @@
 **Zona horaria:** America/Santiago  
 **Repositorio:** `wladimick/App-Kanso`  
 **Rama:** `feat/mobile-menu-post-add-edit`  
+**PR:** #7 · `Add mobile hamburger menu and immediate post-add editing`  
 **Responsable:** ChatGPT · GPT-5.6 Sol
 
 ## 1. Objetivo
@@ -39,43 +40,41 @@ Se creó `src/components/MobileMenu.tsx`.
 - Descubrir;
 - indica visualmente la sección activa;
 - muestra el email de la sesión en el pie;
-- actualiza `?view=` y dispara `popstate` para reutilizar el router ligero actual de `App.tsx` sin duplicar lógica de páginas;
+- actualiza `?view=` y dispara `popstate` para reutilizar el router ligero actual de `App.tsx`;
 - bloquea scroll del body mientras el menú está abierto.
 
-La barra inferior móvil existente se conserva para accesos rápidos; el hamburguesa entrega la navegación completa.
+La barra inferior móvil existente se conserva para accesos rápidos; el hamburguesa entrega navegación completa.
 
 ### Edición inmediata después de agregar
 
-`src/hooks/useLibrary.ts` ahora emite un evento local `kanso:item-added` una vez que Supabase confirma el insert y entrega la fila persistida.
+`src/hooks/useLibrary.ts` emite `kanso:item-added` una vez que Supabase confirma el insert y devuelve la fila persistida.
 
 Se creó `src/components/PostAddEditorBridge.tsx`, que:
 
-- escucha exclusivamente títulos realmente confirmados por Supabase;
+- escucha títulos confirmados por Supabase;
 - comprueba que la fila pertenezca al mismo `session.user.id`;
 - abre `MediaEditor` automáticamente;
-- permite guardar y eliminar usando los mismos servicios seguros existentes;
+- guarda/elimina mediante los servicios existentes;
 - emite `kanso:library-refresh` después de editar/eliminar.
 
-`useLibrary` escucha `kanso:library-refresh` y vuelve a consultar la biblioteca para mantener el dashboard y listas sincronizadas con lo editado en el modal post-agregado.
-
-No se agrega ninguna credencial privilegiada ni se evita RLS.
+`useLibrary` escucha `kanso:library-refresh` y vuelve a consultar la biblioteca para mantener dashboard y listas sincronizadas.
 
 ### Seguimiento rápido en la ficha
 
-`src/components/MediaEditor.tsx` incorpora la sección `¿Cómo vas con este título?`.
+`src/components/MediaEditor.tsx` incorpora `¿Cómo vas con este título?`.
 
 Para series/anime:
 
 - **Lo veré después** → `planned`;
-- **Estoy viendo** → `watching`, precarga temporada 1 / episodio 1 si estaban vacíos y deja visibles los campos para indicar dónde va el usuario;
-- **Ya lo vi completo** → `completed`; si ya existen totales conocidos, alinea temporada/episodio actuales con esos totales.
+- **Estoy viendo** → `watching`, precarga temporada 1 / episodio 1 si estaban vacíos y permite indicar dónde va el usuario;
+- **Ya lo vi completo** → `completed`; si existen totales conocidos, alinea temporada/episodio con esos totales.
 
 Para películas:
 
 - **Lo veré después**;
 - **Ya lo vi completo**.
 
-El selector avanzado de estado se mantiene para `paused` y `dropped`.
+El selector avanzado conserva `paused` y `dropped`.
 
 ## 4. UI / responsive
 
@@ -85,7 +84,7 @@ Incluye:
 
 - espacio superior móvil para evitar superposición con el hamburguesa;
 - safe-area de iPhone;
-- overlay y drawer optimizados para `100dvh`;
+- overlay y drawer en `100dvh`;
 - targets táctiles de 44–52 px;
 - tarjetas rápidas de seguimiento;
 - layout de una columna en el editor móvil.
@@ -113,9 +112,20 @@ No se modificó:
 - TMDB Edge Function;
 - variables de entorno.
 
-Las ediciones post-agregado siguen usando `user_id` de la sesión y los servicios existentes que filtran por usuario.
+Las ediciones post-agregado siguen usando `user_id` de la sesión y servicios que filtran por usuario.
 
-## 8. QA esperado
+## 8. Validaciones automáticas
+
+PR #7 / head de implementación:
+
+- Kanso CI run #117 / `31926765972`: **success**;
+- instalación de dependencias: **success**;
+- TypeScript: **success**;
+- build Vite: **success**;
+- Vercel Preview: **Ready**;
+- Preview: `https://app-kanso-git-feat-mobile-menu-post-add-edit-wladimick1.vercel.app`.
+
+## 9. QA real pendiente
 
 1. abrir Preview desde iPhone;
 2. confirmar hamburguesa superior;
@@ -125,13 +135,9 @@ Las ediciones post-agregado siguen usando `user_id` de la sesión y los servicio
 6. comprobar que la ficha se abre automáticamente;
 7. probar `Estoy viendo` y definir temporada/episodio;
 8. guardar y comprobar que aparece en `Viendo`;
-9. probar con otro título `Ya lo vi completo` y comprobar `Completados`;
+9. probar otro título con `Ya lo vi completo` y comprobar `Completados`;
 10. recargar para validar persistencia.
-
-## 9. Validaciones
-
-Pendiente GitHub Actions, TypeScript, build Vite, Vercel Preview y QA real.
 
 ## 10. Estado
 
-**Implementación en rama completada; pendiente CI/Preview/QA antes de merge.**
+**Código, TypeScript, build y Vercel Preview aprobados. Pendiente QA visual/funcional desde iPhone antes de merge.**
