@@ -69,6 +69,15 @@ test('v3 css keeps three-column release cards on normal phones', async () => {
   assert.match(source, /@media \(max-width: 360px\)/)
 })
 
+test('home receives a compact upcoming rail', async () => {
+  const source = await read('src/components/UpcomingHomeRail.tsx')
+  const css = await read('src/upcoming-home.css')
+  assert.match(source, /Próximamente/)
+  assert.match(source, /fetchUpcomingReleases\('all'\)/)
+  assert.match(source, /Ver estrenos/)
+  assert.match(css, /overflow-x: auto/)
+})
+
 test('v3 mounts after v2 so polish wins cascade', async () => {
   const source = await read('src/main.tsx')
   const v2 = source.indexOf("'./mobile-ux-v2.css'")
@@ -76,4 +85,5 @@ test('v3 mounts after v2 so polish wins cascade', async () => {
   assert.ok(v2 >= 0 && v3 > v2)
   assert.match(source, /<NotificationCenter \/>/)
   assert.match(source, /<ReleasesRoute \/>/)
+  assert.match(source, /<UpcomingHomeRail \/>/)
 })
