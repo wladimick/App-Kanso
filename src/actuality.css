@@ -1,0 +1,212 @@
+/* Kanso · Actualidad v2 · Estrenos + Top actual */
+
+body.releases-view-active .app-shell > .content {
+  display: block !important;
+}
+body.releases-view-active .app-shell > .content > :not(.actuality-page) {
+  display: none !important;
+}
+
+.actuality-page {
+  width: 100%;
+  min-height: 100vh;
+  padding: 34px 38px 110px;
+}
+
+.actuality-hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 22px;
+}
+.actuality-hero > div:first-child { max-width: 720px; }
+.actuality-hero h1 { margin: 4px 0 7px; font-size: clamp(36px, 5vw, 58px); line-height: .98; }
+.actuality-hero p { margin: 0; color: #8d8d97; font-size: 14px; line-height: 1.5; }
+
+.actuality-mode-tabs,
+.actuality-filter-tabs {
+  display: inline-flex;
+  gap: 5px;
+  padding: 4px;
+  border: 1px solid #292930;
+  border-radius: 999px;
+  background: #111115;
+}
+.actuality-mode-tabs button,
+.actuality-filter-tabs button {
+  min-height: 38px;
+  padding: 7px 13px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #8d8d97;
+  font-weight: 700;
+}
+.actuality-mode-tabs button.active,
+.actuality-filter-tabs button.active {
+  background: #f4f4f5;
+  color: #0b0b0e;
+}
+
+.actuality-toolbar {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.actuality-toolbar > span { color: #70707a; font-size: 11px; }
+
+.actuality-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+}
+.actuality-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #292930;
+  border-radius: 16px;
+  background: #111115;
+}
+.actuality-poster {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  background: #202027;
+}
+.actuality-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.actuality-poster > span { width: 100%; height: 100%; display: grid; place-items: center; font-size: 36px; font-weight: 900; }
+.actuality-chip,
+.actuality-rank {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 8px;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 999px;
+  background: rgba(9,9,12,.86);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  backdrop-filter: blur(10px);
+}
+.actuality-rank {
+  min-width: 34px;
+  justify-content: center;
+  font-size: 12px;
+}
+.actuality-copy { padding: 10px; }
+.actuality-copy small { color: #74747e; font-size: 9px; text-transform: uppercase; letter-spacing: .05em; }
+.actuality-copy h2 {
+  min-height: 36px;
+  margin: 5px 0 9px;
+  font-size: 14px;
+  line-height: 1.28;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.actuality-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.actuality-card-footer > span { color: #9898a2; font-size: 10px; font-weight: 700; }
+.actuality-card-footer button {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #34343d;
+  border-radius: 10px;
+  background: #1a1a20;
+  color: #f4f4f5;
+  font-size: 18px;
+  font-weight: 800;
+}
+.actuality-card-footer button:disabled { opacity: .55; }
+
+.actuality-more { display: flex; justify-content: center; padding: 28px 0 4px; }
+.actuality-more button,
+.actuality-message button {
+  min-height: 44px;
+  padding: 9px 20px;
+  border: 1px solid #34343d;
+  border-radius: 12px;
+  background: #f4f4f5;
+  color: #0b0b0e;
+  font-weight: 800;
+}
+.actuality-more button:disabled { opacity: .55; }
+
+.actuality-message {
+  margin: 20px 0;
+  padding: 16px;
+  border: 1px solid #303038;
+  border-radius: 14px;
+  background: #15151a;
+  color: #aaaab3;
+}
+.actuality-message strong,
+.actuality-message span { display: block; }
+.actuality-message span { margin: 5px 0 12px; }
+.actuality-message.error { border-color: #5b3035; }
+
+.actuality-skeleton-grid { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 14px; }
+.actuality-skeleton-grid i {
+  display: block;
+  aspect-ratio: 2/3;
+  border-radius: 16px;
+  background: linear-gradient(90deg, #15151a, #23232a, #15151a);
+  background-size: 200% 100%;
+  animation: actuality-loading 1.2s linear infinite;
+}
+@keyframes actuality-loading { to { background-position: -200% 0; } }
+
+@media (max-width: 1180px) {
+  .actuality-grid,
+  .actuality-skeleton-grid { grid-template-columns: repeat(4, minmax(0,1fr)); }
+}
+
+@media (max-width: 980px) {
+  .actuality-page { padding: 28px 28px 100px; }
+  .actuality-grid,
+  .actuality-skeleton-grid { grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; }
+  .actuality-hero { align-items: flex-start; flex-direction: column; gap: 14px; }
+}
+
+@media (max-width: 760px) {
+  .actuality-page {
+    padding: calc(74px + env(safe-area-inset-top)) 12px calc(105px + env(safe-area-inset-bottom));
+  }
+  .actuality-hero { margin-bottom: 14px; }
+  .actuality-hero h1 { font-size: 38px; }
+  .actuality-hero p { font-size: 12px; }
+  .actuality-mode-tabs { width: 100%; }
+  .actuality-mode-tabs button { flex: 1; }
+  .actuality-toolbar { align-items: flex-start; flex-direction: column; min-height: 0; margin-bottom: 14px; }
+  .actuality-filter-tabs { max-width: 100%; overflow-x: auto; }
+  .actuality-filter-tabs button { min-height: 40px; flex: 0 0 auto; }
+  .actuality-toolbar > span { display: none; }
+  .actuality-grid,
+  .actuality-skeleton-grid { grid-template-columns: repeat(3, minmax(0,1fr)); gap: 7px; }
+  .actuality-card { border-radius: 12px; }
+  .actuality-copy { padding: 7px; }
+  .actuality-copy small { font-size: 7px; }
+  .actuality-copy h2 { min-height: 29px; margin: 4px 0 7px; font-size: 11px; }
+  .actuality-card-footer > span { font-size: 8px; }
+  .actuality-card-footer button { width: 30px; height: 30px; flex-basis: 30px; border-radius: 8px; font-size: 16px; }
+  .actuality-chip, .actuality-rank { top: 5px; left: 5px; min-height: 24px; padding: 4px 6px; font-size: 8px; }
+  .actuality-rank { min-width: 29px; font-size: 10px; }
+  .actuality-more { padding-top: 20px; }
+  .actuality-more button { width: 100%; }
+}
+
+@media (max-width: 360px) {
+  .actuality-grid,
+  .actuality-skeleton-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
