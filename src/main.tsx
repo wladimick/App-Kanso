@@ -23,6 +23,7 @@ import './compact-editor.css'
 import './mobile-ux-v2.css'
 import './mobile-ux-v3.css'
 import './upcoming-home.css'
+import './actuality.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
