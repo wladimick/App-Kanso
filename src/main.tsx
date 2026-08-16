@@ -6,6 +6,7 @@ import { MobileMenu } from './components/MobileMenu'
 import { MobileTabBar } from './components/MobileTabBar'
 import { NotificationCenter } from './components/NotificationCenter'
 import { PostAddEditorBridge } from './components/PostAddEditorBridge'
+import { QuickAddBridge } from './components/QuickAddBridge'
 import { ReleasesRoute } from './components/ReleasesRoute'
 import { StatusIconPolish } from './components/StatusIconPolish'
 import { UpcomingHomeRail } from './components/UpcomingHomeRail'
@@ -33,6 +34,7 @@ createRoot(document.getElementById('root')!).render(
     <MarvelHubRoute />
     <StatusIconPolish />
     <UpcomingHomeRail />
+    <QuickAddBridge />
     <PostAddEditorBridge />
   </StrictMode>,
 )
