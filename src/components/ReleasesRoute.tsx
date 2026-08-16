@@ -34,6 +34,7 @@ export function ReleasesRoute() {
   const [filter, setFilter] = useState<ReleaseFilter>('all')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
   const [sidebarTarget, setSidebarTarget] = useState<Element | null>(null)
 
   useEffect(() => {
@@ -52,11 +53,12 @@ export function ReleasesRoute() {
     if (!active || !session) return
     setLoading(true)
     setError(null)
+    setItems([])
     void fetchUpcomingReleases(filter)
       .then(setItems)
       .catch((cause) => setError(cause instanceof Error ? cause.message : 'No pudimos cargar los estrenos.'))
       .finally(() => setLoading(false))
-  }, [active, filter, session])
+  }, [active, filter, session, reloadKey])
 
   const existing = useMemo(() => new Set(rows.map((row) => `${row.source}:${row.external_id}`)), [rows])
 
@@ -91,7 +93,7 @@ export function ReleasesRoute() {
           <header className="releases-hero">
             <span className="eyebrow">Calendario Kanso</span>
             <h1>Estrenos</h1>
-            <p>Películas y series próximas a estrenarse. Agrégalas a tu lista con un toque y Kanso las tendrá presentes.</p>
+            <p>Películas próximas y series con emisiones próximas. Agrégalas a tu lista con un toque y Kanso las tendrá presentes.</p>
             <div className="releases-tabs">
               {([['all','Para ti'],['movie','Películas'],['series','Series']] as const).map(([value,label]) => (
                 <button key={value} type="button" className={filter === value ? 'active' : ''} onClick={() => setFilter(value)}>{label}</button>
@@ -100,8 +102,21 @@ export function ReleasesRoute() {
           </header>
 
           {!session && <div className="release-message"><strong>Inicia sesión para consultar estrenos.</strong></div>}
-          {error && <div className="release-message error"><strong>No pudimos cargar los estrenos.</strong><span>{error}</span></div>}
+          {error && (
+            <div className="release-message error">
+              <strong>No pudimos cargar los estrenos.</strong>
+              <span>{error}</span>
+              <button type="button" onClick={() => setReloadKey((value) => value + 1)}>Reintentar</button>
+            </div>
+          )}
           {loading && <div className="release-message">Buscando próximos estrenos…</div>}
+          {!loading && !error && session && items.length === 0 && (
+            <div className="release-message release-empty">
+              <strong>No encontramos estrenos para este filtro.</strong>
+              <span>Prueba otra categoría o vuelve a consultar en unos minutos.</span>
+              <button type="button" onClick={() => setReloadKey((value) => value + 1)}>Actualizar</button>
+            </div>
+          )}
 
           <div className="release-grid">
             {items.map((item) => {
