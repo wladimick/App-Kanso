@@ -9,6 +9,7 @@ import './discover.css'
 import './power-ui.css'
 import './mobile-nav-fix.css'
 import './app-shell-enhancements.css'
+import './mobile-polish.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
