@@ -1,0 +1,222 @@
+/* Kanso · editor móvil compacto
+   Objetivo: reducir scroll sin sacrificar legibilidad ni targets táctiles. */
+
+@media (max-width: 760px) {
+  .media-editor {
+    background: #0d0d11;
+  }
+
+  .editor-hero {
+    min-height: 104px;
+    grid-template-columns: 56px minmax(0, 1fr) 40px;
+    gap: 10px;
+    padding: calc(10px + env(safe-area-inset-top)) 12px 10px;
+  }
+
+  .editor-poster {
+    width: 56px;
+    border-radius: 9px;
+  }
+
+  .editor-kicker {
+    font-size: 8px;
+    letter-spacing: .14em;
+  }
+
+  .editor-heading h2 {
+    margin: 3px 0;
+    font-size: 18px;
+    line-height: 1.08;
+    -webkit-line-clamp: 1;
+  }
+
+  .editor-heading p {
+    font-size: 11px;
+  }
+
+  .editor-close {
+    width: 40px;
+    height: 40px;
+    font-size: 23px;
+  }
+
+  .editor-form {
+    gap: 12px;
+    padding: 12px 12px calc(72px + env(safe-area-inset-bottom));
+  }
+
+  .editor-quick-status {
+    gap: 9px;
+    padding: 11px;
+    border-radius: 13px;
+  }
+
+  .editor-quick-heading {
+    display: block;
+  }
+
+  .editor-quick-heading h3 {
+    margin: 3px 0 0;
+    font-size: 16px;
+    line-height: 1.15;
+  }
+
+  .editor-quick-heading small {
+    display: none;
+  }
+
+  .editor-quick-grid,
+  .editor-quick-grid.movie {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .editor-quick-grid.movie {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .quick-status-card {
+    min-height: 54px;
+    justify-content: center;
+    padding: 8px 7px;
+    border-radius: 10px;
+  }
+
+  .quick-status-card strong {
+    width: 100%;
+    font-size: 10px;
+    line-height: 1.18;
+    text-align: center;
+  }
+
+  .quick-status-card span {
+    display: none;
+  }
+
+  .editor-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .progress-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .editor-form label {
+    gap: 5px;
+  }
+
+  .editor-form label > span {
+    font-size: 10px;
+  }
+
+  .editor-form input[type='number'],
+  .editor-form select,
+  .editor-form textarea {
+    min-height: 44px;
+    border-radius: 10px;
+    padding: 10px 11px;
+    font-size: 16px;
+  }
+
+  .favorite-toggle {
+    min-height: 44px;
+    padding-inline: 10px;
+  }
+
+  .favorite-toggle span {
+    font-size: 10px !important;
+    line-height: 1.2;
+  }
+
+  .editor-form textarea {
+    min-height: 86px;
+    max-height: 150px;
+    line-height: 1.4;
+  }
+
+  .editor-message {
+    padding: 9px 10px;
+    font-size: 11px;
+  }
+
+  .editor-actions {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1004;
+    display: grid;
+    grid-template-columns: .78fr 2.1fr;
+    align-items: stretch;
+    gap: 7px;
+    margin: 0;
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+    border-top: 1px solid #292930;
+    background: rgba(15, 15, 19, .97);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+
+  .editor-actions > div {
+    display: grid;
+    grid-template-columns: .9fr 1.3fr;
+    gap: 7px;
+    min-width: 0;
+  }
+
+  .editor-actions button {
+    min-width: 0;
+    min-height: 44px;
+    padding: 8px 9px;
+    border-radius: 10px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .danger-action {
+    grid-column: 1;
+    grid-row: 1;
+    width: 100%;
+  }
+
+  .editor-actions > div {
+    grid-column: 2;
+    grid-row: 1;
+  }
+}
+
+@media (max-width: 360px) {
+  .editor-hero {
+    grid-template-columns: 50px minmax(0, 1fr) 38px;
+  }
+
+  .editor-poster {
+    width: 50px;
+  }
+
+  .editor-close {
+    width: 38px;
+    height: 38px;
+  }
+
+  .quick-status-card strong {
+    font-size: 9px;
+  }
+
+  .editor-actions {
+    grid-template-columns: .72fr 2.2fr;
+    gap: 5px;
+    padding-inline: 8px;
+  }
+
+  .editor-actions > div {
+    gap: 5px;
+  }
+
+  .editor-actions button {
+    padding-inline: 6px;
+    font-size: 10px;
+  }
+}
