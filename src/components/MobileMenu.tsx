@@ -10,6 +10,7 @@ const menuItems = [
   { view: 'completed', label: 'Completados', icon: '✓' },
   { view: 'favorites', label: 'Favoritos', icon: '★' },
   { view: 'collections', label: 'Colecciones', icon: '▣' },
+  { view: 'marvel', label: 'Marvel', icon: '✦' },
   { view: 'discover', label: 'Descubrir', icon: '⌕' },
 ] as const
 
