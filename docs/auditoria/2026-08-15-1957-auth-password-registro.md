@@ -4,6 +4,7 @@
 **Zona horaria:** America/Santiago  
 **Repositorio:** `wladimick/App-Kanso`  
 **Rama:** `feat/auth-password-signup`  
+**PR:** #5 · `Replace Magic Link with password auth and signup`  
 **Responsable de registro:** ChatGPT · GPT-5.6 Sol
 
 ## 1. Objetivo
@@ -137,11 +138,19 @@ Este flujo requiere un único correo de recuperación para la transición y para
 
 - `docs/auditoria/2026-08-15-1957-auth-password-registro.md`
 
-## 11. Validaciones pendientes
+## 11. Validaciones automáticas
 
-- GitHub Actions / TypeScript;
-- build Vite;
-- Preview Vercel;
+PR #5 / head inicial de QA:
+
+- Vercel Preview: **Ready**;
+- Preview: `https://app-kanso-git-feat-auth-password-signup-wladimick1.vercel.app`;
+- Kanso CI run #105 / `31916201525`: **success**;
+- instalación de dependencias: **success**;
+- TypeScript: **success**;
+- build Vite: **success**.
+
+## 12. QA real pendiente
+
 - login con usuario email+password real;
 - creación de usuario nuevo;
 - confirmar comportamiento según setting de email confirmation;
@@ -150,6 +159,6 @@ Este flujo requiere un único correo de recuperación para la transición y para
 - cerrar sesión y volver a entrar;
 - verificar que un usuario nuevo vea biblioteca vacía y no datos de otro usuario.
 
-## 12. Estado
+## 13. Estado
 
-**Implementación de código completada en rama. Pendiente CI, Preview Vercel y configuración/QA real del proyecto Supabase Kanso.**
+**Código, TypeScript, build y Preview Vercel aprobados. Pendiente configuración/QA real del proyecto Supabase Kanso antes de merge a `main`.**
