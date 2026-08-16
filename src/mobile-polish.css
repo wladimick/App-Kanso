@@ -1,0 +1,190 @@
+/* Kanso · Mobile polish / dense library */
+
+@media (max-width: 760px) {
+  /* La cuenta vive en el menú hamburguesa, no repetida en cada pantalla. */
+  .topbar .auth-session {
+    display: none !important;
+  }
+
+  .topbar-actions {
+    width: 100%;
+  }
+
+  .topbar-actions:empty {
+    display: none;
+  }
+
+  .content {
+    padding-top: 66px;
+  }
+
+  .topbar {
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .topbar h1 {
+    max-width: calc(100% - 60px);
+  }
+
+  .page-description {
+    margin-bottom: 8px;
+  }
+
+  .data-mode {
+    margin-top: 0;
+    font-size: 11px;
+  }
+
+  .page-list-block {
+    margin-top: 18px;
+  }
+
+  .library-heading {
+    gap: 10px;
+  }
+
+  /* Tres portadas por fila en teléfono. */
+  .library-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .media-card {
+    min-width: 0;
+    border-radius: 12px;
+  }
+
+  .media-card .cover {
+    aspect-ratio: 2 / 3;
+    border-radius: 0;
+  }
+
+  .cover em {
+    top: 6px;
+    left: 6px;
+    max-width: calc(100% - 12px);
+    padding: 4px 6px;
+    font-size: 7px;
+    letter-spacing: .02em;
+  }
+
+  .favorite-badge {
+    top: 6px;
+    right: 6px;
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
+  }
+
+  .media-body {
+    padding: 8px 7px 9px;
+  }
+
+  .media-body .meta {
+    gap: 4px;
+    margin-bottom: 4px;
+    font-size: 7px;
+    letter-spacing: .045em;
+  }
+
+  .media-body .meta span:nth-child(2) {
+    display: none;
+  }
+
+  .media-body h3 {
+    min-height: 27px;
+    margin-bottom: 4px;
+    font-size: 11px;
+    line-height: 1.2;
+    -webkit-line-clamp: 2;
+  }
+
+  .card-detail-line {
+    min-height: 14px;
+    display: block;
+    font-size: 8px;
+  }
+
+  .card-detail-line strong {
+    display: block;
+    margin-top: 2px;
+  }
+
+  .media-footer {
+    margin-top: 5px;
+    font-size: 7px;
+  }
+
+  .media-footer span:last-child {
+    display: none;
+  }
+
+  .filters {
+    padding-bottom: 1px;
+  }
+
+  .filter {
+    min-height: 38px;
+    padding: 8px 13px;
+    font-size: 11px;
+  }
+
+  .search-box {
+    min-height: 46px;
+  }
+
+  .mobile-menu-account {
+    display: grid;
+    gap: 8px;
+  }
+
+  .mobile-menu-signout {
+    min-height: 44px;
+    margin-top: 4px;
+    border: 1px solid #36363f;
+    border-radius: 11px;
+    background: #1d1d23;
+    color: #efeff2;
+    font-size: 12px;
+    font-weight: 750;
+  }
+
+  .mobile-menu-signout:disabled {
+    opacity: .55;
+  }
+
+  /* Más aire útil para resultados vacíos sin ocupar media pantalla. */
+  .empty-state {
+    padding: 16px;
+  }
+
+  .empty-state p {
+    margin-bottom: 0;
+  }
+}
+
+@media (max-width: 390px) {
+  .content {
+    padding-top: 64px;
+  }
+
+  .library-grid {
+    gap: 6px;
+  }
+
+  .media-body {
+    padding: 7px 6px 8px;
+  }
+
+  .media-body h3 {
+    font-size: 10.5px;
+  }
+}
+
+@media (max-width: 340px) {
+  /* En equipos extremadamente angostos priorizamos legibilidad. */
+  .library-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
