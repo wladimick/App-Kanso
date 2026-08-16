@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
+import { supabase } from '../lib/supabase'
 
 const menuItems = [
   { view: 'home', label: 'Inicio', icon: '⌂' },
@@ -23,6 +24,7 @@ export function MobileMenu() {
   const { session } = useAuth()
   const [open, setOpen] = useState(false)
   const [activeView, setActiveView] = useState<ViewKey>(() => currentView())
+  const [signingOut, setSigningOut] = useState(false)
 
   useEffect(() => {
     const sync = () => {
@@ -46,6 +48,14 @@ export function MobileMenu() {
     window.history.pushState({}, '', url)
     window.dispatchEvent(new PopStateEvent('popstate'))
     window.scrollTo({ top: 0, behavior: 'smooth' })
+    setOpen(false)
+  }
+
+  const signOut = async () => {
+    if (!supabase || signingOut) return
+    setSigningOut(true)
+    await supabase.auth.signOut()
+    setSigningOut(false)
     setOpen(false)
   }
 
@@ -95,8 +105,16 @@ export function MobileMenu() {
             </nav>
 
             <footer className="mobile-menu-account">
-              <span>Sesión activa</span>
+              <span>Tu cuenta</span>
               <strong>{session?.user.email ?? 'Usuario Kanso'}</strong>
+              <button
+                type="button"
+                className="mobile-menu-signout"
+                onClick={() => void signOut()}
+                disabled={!session || signingOut}
+              >
+                {signingOut ? 'Cerrando sesión…' : 'Cerrar sesión'}
+              </button>
             </footer>
           </aside>
         </div>
