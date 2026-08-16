@@ -18,6 +18,8 @@ test('releases route is isolated by URL view', async () => {
   assert.match(source, /get\('view'\) === 'releases'/)
   assert.match(source, /fetchUpcomingReleases/)
   assert.match(source, /status: 'planned'/)
+  assert.match(source, /No encontramos estrenos para este filtro/)
+  assert.match(source, /Reintentar/)
 })
 
 test('notification center is user scoped in local storage', async () => {
@@ -56,11 +58,14 @@ test('tmdb releases edge function keeps token server side and requires auth', as
   assert.doesNotMatch(source, /sb_publishable_SC_/)
 })
 
-test('tmdb releases queries future movie and tv windows', async () => {
+test('tmdb releases uses regional movie dates and airing windows', async () => {
   const source = await read('supabase/functions/tmdb-releases/index.ts')
-  assert.match(source, /primary_release_date\.gte=/)
-  assert.match(source, /first_air_date\.gte=/)
+  assert.match(source, /release_date\.gte=/)
+  assert.match(source, /with_release_type=2\|3\|4\|6/)
+  assert.match(source, /air_date\.gte=/)
+  assert.match(source, /next_episode_to_air/)
   assert.match(source, /setDate\(until\.getDate\(\) \+ 90\)/)
+  assert.doesNotMatch(source, /primary_release_date\.gte=/)
 })
 
 test('v3 css keeps three-column release cards on normal phones', async () => {
