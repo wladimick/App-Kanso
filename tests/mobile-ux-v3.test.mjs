@@ -13,12 +13,14 @@ test('mobile tab bar promotes releases', async () => {
   assert.match(source, /Buscar/)
 })
 
-test('releases route is isolated by URL view', async () => {
+test('actuality route is isolated by URL view and supports top mode', async () => {
   const source = await read('src/components/ReleasesRoute.tsx')
   assert.match(source, /get\('view'\) === 'releases'/)
-  assert.match(source, /fetchUpcomingReleases/)
+  assert.match(source, /section.*top/)
+  assert.match(source, /fetchActualityPage/)
+  assert.match(source, /Top actual/)
+  assert.match(source, /loadMore/)
   assert.match(source, /status: 'planned'/)
-  assert.match(source, /No encontramos estrenos para este filtro/)
   assert.match(source, /Reintentar/)
 })
 
@@ -58,20 +60,23 @@ test('tmdb releases edge function keeps token server side and requires auth', as
   assert.doesNotMatch(source, /sb_publishable_SC_/)
 })
 
-test('tmdb releases uses regional movie dates and airing windows', async () => {
+test('tmdb releases supports upcoming pagination and trending today', async () => {
   const source = await read('supabase/functions/tmdb-releases/index.ts')
   assert.match(source, /release_date\.gte=/)
   assert.match(source, /with_release_type=2\|3\|4\|6/)
   assert.match(source, /air_date\.gte=/)
   assert.match(source, /next_episode_to_air/)
-  assert.match(source, /setDate\(until\.getDate\(\) \+ 90\)/)
+  assert.match(source, /trending\/\$\{media\}\/day/)
+  assert.match(source, /page=\$\{page\}/)
+  assert.match(source, /hasMore/)
   assert.doesNotMatch(source, /primary_release_date\.gte=/)
 })
 
-test('v3 css keeps three-column release cards on normal phones', async () => {
-  const source = await read('src/mobile-ux-v3.css')
+test('actuality v2 keeps three columns on phones and two on very small screens', async () => {
+  const source = await read('src/actuality.css')
   assert.match(source, /grid-template-columns: repeat\(3, minmax\(0,1fr\)\)/)
   assert.match(source, /@media \(max-width: 360px\)/)
+  assert.match(source, /grid-template-columns: repeat\(2, minmax\(0,1fr\)\)/)
 })
 
 test('home receives a compact upcoming rail', async () => {
@@ -83,11 +88,11 @@ test('home receives a compact upcoming rail', async () => {
   assert.match(css, /overflow-x: auto/)
 })
 
-test('v3 mounts after v2 so polish wins cascade', async () => {
+test('actuality stylesheet loads after v3 to own route layout', async () => {
   const source = await read('src/main.tsx')
-  const v2 = source.indexOf("'./mobile-ux-v2.css'")
   const v3 = source.indexOf("'./mobile-ux-v3.css'")
-  assert.ok(v2 >= 0 && v3 > v2)
+  const actuality = source.indexOf("'./actuality.css'")
+  assert.ok(v3 >= 0 && actuality > v3)
   assert.match(source, /<NotificationCenter \/>/)
   assert.match(source, /<ReleasesRoute \/>/)
   assert.match(source, /<UpcomingHomeRail \/>/)
