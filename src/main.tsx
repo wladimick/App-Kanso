@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
+import { FloatingSearchButton } from './components/FloatingSearchButton'
 import { MarvelHubRoute } from './components/MarvelHubRoute'
 import { MobileMenu } from './components/MobileMenu'
 import { MobileTabBar } from './components/MobileTabBar'
@@ -28,6 +29,7 @@ import './actuality.css'
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
+    <FloatingSearchButton />
     <MobileMenu />
     <MobileTabBar />
     <NotificationCenter />
