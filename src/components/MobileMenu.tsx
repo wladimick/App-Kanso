@@ -11,7 +11,7 @@ const menuItems = [
   { view: 'favorites', label: 'Favoritos', icon: '★' },
   { view: 'collections', label: 'Colecciones', icon: '▣' },
   { view: 'releases', label: 'Estrenos', icon: '◷' },
-  { view: 'marvel', label: 'Marvel', icon: '✦' },
+  { view: 'universes', label: 'Universos', icon: '✦' },
   { view: 'discover', label: 'Descubrir', icon: '⌕' },
 ] as const
 
@@ -19,6 +19,7 @@ type ViewKey = typeof menuItems[number]['view']
 
 function currentView(): ViewKey {
   const value = new URLSearchParams(window.location.search).get('view')
+  if (value === 'marvel') return 'universes'
   return menuItems.some((item) => item.view === value) ? value as ViewKey : 'home'
 }
 
@@ -43,6 +44,7 @@ export function MobileMenu() {
     const url = new URL(window.location.href)
     if (view === 'home') url.searchParams.delete('view')
     else url.searchParams.set('view', view)
+    if (view !== 'universes') url.searchParams.delete('universe')
     url.searchParams.delete('focus')
     window.history.pushState({}, '', url)
     window.dispatchEvent(new PopStateEvent('popstate'))
